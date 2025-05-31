@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!--设置父工程为foodie-parent-->
+    <parent>
+        <groupId>com.chris</groupId>
+        <artifactId>foodie-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <!--不在中央库，想对路径不能自闭合-->
+        <relativePath>../foodie-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>foodie-common</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <!-- 默认就是 jar，也可以显式写 -->
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <!--阿里云OSS依赖 & JAXB相关依赖-->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+        </dependency>
+        <!-- no more than 2.3.3-->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+        </dependency>
+        <!--引入JWT依赖-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
