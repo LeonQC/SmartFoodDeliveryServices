@@ -12,6 +12,7 @@ HELP.md
 .springBeans
 .sts4-cache
 ### IntelliJ IDEA ###
+application-dev.yml
 .idea
 *.iws
 *.iml

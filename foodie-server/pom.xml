@@ -35,6 +35,37 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- SpringData JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Swagger v3 -->
+        <!-- 1) Springdoc OpenAPI Starter（生成 /v3/api-docs 和 /swagger-ui.html） -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        <!-- 2) Knife4j 针对 Springdoc 的 UI 增强 -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Google 的 ID Token 验证器 -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <!-- 依赖 Gson 用于解析 Google 返回的 JSON -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
         <!--引入foodie-pojo依赖-->
         <dependency>
             <groupId>com.chris</groupId>
@@ -47,20 +78,25 @@
             <artifactId>foodie-common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!-- 引入数据库依赖, 版本已由spring-boot-starter-parent管理-->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
+        <!-- 引入MapStruct依赖，用于将DTO映射进Entity-->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.5.5.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.5.5.Final</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <!--所有模块只有这一个启动器且命名为*Application时可以省略不写-->
-                    <mainClass>com.chris.FoodieTakeOutApplication</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>
