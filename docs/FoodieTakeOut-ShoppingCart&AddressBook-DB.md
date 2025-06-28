@@ -4,7 +4,7 @@ This document outlines the database schema for the shopping cart module and addr
 
 ## Database Tables
 
-## Table: cart_items
+## Table: carts
 
 | Field Name   | Data Type                   | Constraints                        | Description                                  |
 | ------------ | --------------------------- | ---------------------------------- | -------------------------------------------- |
@@ -15,8 +15,8 @@ This document outlines the database schema for the shopping cart module and addr
 | `unit_price` | NUMERIC(10,2)               | NOT NULL                           | Snapshot of the dish price at time of adding |
 | `quantity`   | INTEGER                     | NOT NULL                           | Quantity the client intends to order         |
 | `remark`     | VARCHAR(255)                |                                    | Any special request (e.g., “no onions”)      |
-| `create_time`| TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this item was first added               |
-| `update_time`| TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | Last time quantity or remark was updated     |
+| `create_time`| TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this item was first added               |
+| `update_time`| TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | Last time quantity or remark was updated     |
 
 **Indexes:**
 - **PRIMARY KEY** on `id`
@@ -26,7 +26,7 @@ This document outlines the database schema for the shopping cart module and addr
 **SQL for creating the cart_items table:**
 ```sql
 -- 1. 创建表
-CREATE TABLE cart_items (
+CREATE TABLE carts (
   id          BIGSERIAL PRIMARY KEY,
   client_id   BIGINT    NOT NULL REFERENCES clients(id),
   dish_id     BIGINT    NOT NULL REFERENCES dishes(id),
@@ -34,23 +34,23 @@ CREATE TABLE cart_items (
   unit_price  NUMERIC(10,2) NOT NULL,
   quantity    INTEGER   NOT NULL,
   remark      VARCHAR(255),
-  create_time TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-  update_time TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+  create_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+  update_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
 -- 2. 索引
-CREATE INDEX idx_cart_items_client_id ON cart_items(client_id);
-CREATE UNIQUE INDEX uq_cart_item_client_dish ON cart_items(client_id, dish_id);
+CREATE INDEX idx_cart_items_client_id ON carts(client_id);
+CREATE UNIQUE INDEX uq_cart_item_client_dish ON carts(client_id, dish_id);
 -- 3. 注释
-COMMENT ON TABLE cart_items IS 'Shopping cart items for clients';
-COMMENT ON COLUMN cart_items.id          IS 'Unique identifier for each cart item';
-COMMENT ON COLUMN cart_items.client_id   IS 'Client who owns this cart item';
-COMMENT ON COLUMN cart_items.dish_id     IS 'The dish being added';
-COMMENT ON COLUMN cart_items.dish_name   IS 'Snapshot of dish name when added';
-COMMENT ON COLUMN cart_items.unit_price  IS 'Snapshot of dish price when added';
-COMMENT ON COLUMN cart_items.quantity    IS 'Desired quantity';
-COMMENT ON COLUMN cart_items.remark      IS 'Special requests';
-COMMENT ON COLUMN cart_items.create_time IS 'Time item was added';
-COMMENT ON COLUMN cart_items.update_time IS 'Time item was last updated';
+COMMENT ON TABLE carts IS 'Shopping cart items for clients';
+COMMENT ON COLUMN carts.id          IS 'Unique identifier for each cart item';
+COMMENT ON COLUMN carts.client_id   IS 'Client who owns this cart item';
+COMMENT ON COLUMN carts.dish_id     IS 'The dish being added';
+COMMENT ON COLUMN carts.dish_name   IS 'Snapshot of dish name when added';
+COMMENT ON COLUMN carts.unit_price  IS 'Snapshot of dish price when added';
+COMMENT ON COLUMN carts.quantity    IS 'Desired quantity';
+COMMENT ON COLUMN carts.remark      IS 'Special requests';
+COMMENT ON COLUMN carts.create_time IS 'Time item was added';
+COMMENT ON COLUMN carts.update_time IS 'Time item was last updated';
 ```
 
 ## Table: client_addresses
@@ -71,8 +71,8 @@ COMMENT ON COLUMN cart_items.update_time IS 'Time item was last updated';
 | `latitude`      | DOUBLE PRECISION            |                                    | Coordinate for map integration           |
 | `longitude`     | DOUBLE PRECISION            |                                    | Coordinate for map integration           |
 | `is_default`    | BOOLEAN                     | NOT NULL DEFAULT FALSE             | Whether this is the default address      |
-| `create_time`   | TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this address was added              |
-| `update_time`   | TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this address was last updated       |
+| `create_time`   | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this address was added              |
+| `update_time`   | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this address was last updated       |
 
 **Indexes:**
 - **PRIMARY KEY** on `id`
@@ -97,8 +97,8 @@ CREATE TABLE client_addresses (
   latitude       DOUBLE PRECISION,
   longitude      DOUBLE PRECISION,
   is_default     BOOLEAN     NOT NULL DEFAULT FALSE,
-  create_time    TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-  update_time    TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+  create_time    TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+  update_time    TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
 -- 2. 索引
 CREATE INDEX idx_client_addresses_client_id ON client_addresses(client_id);

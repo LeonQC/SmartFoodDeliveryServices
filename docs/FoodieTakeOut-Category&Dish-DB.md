@@ -12,8 +12,8 @@ This document outlines the database schema for the FoodieTakeOut service, which 
 | name         | varchar(32)                 | NOT NULL UNIQUE        | Category name                                   |
 | sort         | integer                     | NOT NULL               | Sort order for category records                 |
 | status       | smallint                    | NOT NULL DEFAULT 1     | Status (1 = enabled; 0 = disabled)              |
-| create_time  | timestamp without time zone | NOT NULL DEFAULT NOW() | Creation timestamp                              |
-| update_time  | timestamp without time zone | NOT NULL DEFAULT NOW() | Last modification timestamp                     |
+| create_time  | timestamp(0) without time zone | NOT NULL DEFAULT NOW() | Creation timestamp                              |
+| update_time  | timestamp(0) without time zone | NOT NULL DEFAULT NOW() | Last modification timestamp                     |
 
 **Indexes:**  
 - **PRIMARY KEY** on `id`
@@ -27,8 +27,8 @@ CREATE TABLE categories (
     name varchar(32) NOT NULL UNIQUE,
     sort integer NOT NULL,
     status smallint NOT NULL DEFAULT 1,
-    create_time timestamp without time zone NOT NULL DEFAULT NOW(),
-    update_time timestamp without time zone NOT NULL DEFAULT NOW()
+    create_time timestamp(0) without time zone NOT NULL DEFAULT NOW(),
+    update_time timestamp(0) without time zone NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_categories_merchant_id ON categories (merchant_id);
@@ -72,8 +72,8 @@ CREATE TABLE dishes (
     image        VARCHAR(255),
     description  VARCHAR(255),
     status       SMALLINT                     NOT NULL,
-    create_time  TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT NOW(),
-    update_time  TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT NOW()
+    create_time  TIMESTAMP(0) WITHOUT TIME ZONE  NOT NULL DEFAULT NOW(),
+    update_time  TIMESTAMP(0) WITHOUT TIME ZONE  NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_dishes_category_id ON dishes (category_id);

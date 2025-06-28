@@ -6,10 +6,11 @@ import com.chris.dto.groups.MerchantGroup;
 import com.chris.dto.groups.RiderGroup;
 import com.chris.enumeration.RoleType;
 import com.chris.service.RegistrationService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import com.chris.vo.Result;
+import com.chris.vo.resultVOs.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +36,7 @@ public class RegistrationController {
     private Validator validator;
 
     @PostMapping
+    @Operation(summary = "User registration", description = "Register new account for Client/Merchant/Rider")
     public Result<String> register(@RequestBody RegistrationDTO dto) {
         RoleType role = dto.getUser().getRole();
 

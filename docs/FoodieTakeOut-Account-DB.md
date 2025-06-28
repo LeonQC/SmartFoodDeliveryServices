@@ -13,8 +13,8 @@ This document outlines the database schema for the FoodieTakeOut service, which 
 | email                  | TEXT              | NOT NULL UNIQUE | Merchant’s email address                                        |
 | role                   | TEXT              | NOT NULL        | Role of the user (e.g., `"merchant"`, `"consumer"`, `"rider"`)  |
 | profile_completed      | BOOLEAN           | NOT NULL        | Whether the merchant has completed their profile                |
-| create_time            | TIMESTAMP         | NOT NULL DEFAULT NOW() | Date and time when the record was created                |
-| update_time            | TIMESTAMP         | NOT NULL DEFAULT NOW() | Date and time when the record was last updated           |
+| create_time            | TIMESTAMP(0)         | NOT NULL DEFAULT NOW() | Date and time when the record was created                |
+| update_time            | TIMESTAMP(0)         | NOT NULL DEFAULT NOW() | Date and time when the record was last updated           |
 
 **Indexes:**  
 - **PRIMARY KEY** on `id`
@@ -29,8 +29,8 @@ CREATE TABLE users (
     email TEXT NOT NULL UNIQUE,
     profile_completed BOOLEAN NOT NULL,
     role TEXT NOT NULL,
-    create_time TIMESTAMP NOT NULL DEFAULT NOW(),
-    update_time TIMESTAMP NOT NULL DEFAULT NOW()
+    create_time TIMESTAMP(0) NOT NULL DEFAULT NOW(),
+    update_time TIMESTAMP(0) NOT NULL DEFAULT NOW()
 );
 
 COMMENT ON TABLE users IS 'Stores general account information for all user types.';

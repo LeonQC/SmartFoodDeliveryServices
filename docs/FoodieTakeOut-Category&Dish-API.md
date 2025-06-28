@@ -7,6 +7,7 @@ This document describes the API endpoints for managing and querying categories a
 1. **Merchant Category & Dish Management**
    1. Manage menu categories
    2. Manage dish items
+   3. Query categories and dishes status (dashboard)
 2. **Client Restaurant & Category & Dish Query**
    1. View all restaurants (sort by distance/rating/price)
    2. View restaurant details
@@ -204,6 +205,8 @@ This document describes the API endpoints for managing and querying categories a
 | └─ `id`       | number | Yes        | Category ID                             |
 | └─ `name`     | string | Yes        | Category name                           |
 | └─ `sort`     | number | Yes        | For sorting (ascending) categories      |
+| └─ `createTime` | string | Yes      | Creation time                           |
+| └─ `updateTime` | string | Yes      | Update time                             |
 
 **Response Body Sample**
 ```json
@@ -230,7 +233,7 @@ This document describes the API endpoints for managing and querying categories a
 - Authorization: Bearer {accessToken}
 - X-Refresh-Token: Bearer {refreshToken}
 
-**Request Parameter Format:** `application/json`
+**Request Parameter Format:** `Path Variable` + `application/json`
 
 **Request Parameter Description:**
 | Parameter | Type    | Required | Description                         |
@@ -242,10 +245,12 @@ This document describes the API endpoints for managing and querying categories a
 **Request Body Sample**
 ```json
 {
-  "id": 1,
   "name": "Noodles",
   "sort": 1
 }
+```
+```shell
+/merchant/categories/{categoryId}
 ```
 
 **Response Body Format:** `application/json`
@@ -270,7 +275,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Purpose:** Change category status rather than delete it.
 
-**Endpoint:** `/merchant/categories/status`
+**Endpoint:** `/merchant/categories/{categoryId}/status/{status}`
 
 **Method:** `POST`
 
@@ -278,7 +283,7 @@ This document describes the API endpoints for managing and querying categories a
 - Authorization: Bearer {accessToken}
 - X-Refresh-Token: Bearer {refreshToken}
 
-**Request Body Format:** `Path Variable` + Query Parameters
+**Request Body Format:** `Path Variable`
 
 **Request Body Description:**
 | Parameter | Type  | Example  | Required | Description               |
@@ -288,7 +293,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Request Body Sample:**
 ```shell
-/shop/categories/status/{status}?id=1
+/merchant/categories/{categoryId}/status/{status}
 ```
 
 **Response Body Format:** `application/json`
@@ -612,15 +617,15 @@ This document describes the API endpoints for managing and querying categories a
 
 **Purpose:** Change dish item status rather than delete it.
 
-**Endpoint:** `/merchant/dishes/status`
+**Endpoint:** `/merchant/dishes/{dishId}/status/{status}`
 
-**Method:** `POST`
+**Method:** `PUT`
 
 **Headers:**
 - Authorization: Bearer {accessToken}
 - X-Refresh-Token: Bearer {refreshToken}
 
-**Request Body Format:** `Path Variable` + Query Parameters
+**Request Body Format:** `Path Variable`
 
 **Request Body Description:**
 | Parameter | Type  | Example  | Required | Description           |
@@ -630,7 +635,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Request Body Sample:**
 ```shell
-/shop/dishes/status/{status}?id=1
+/shop/dishes/1/status/1
 ```
 
 **Response Body Format:** `application/json`
@@ -646,10 +651,57 @@ This document describes the API endpoints for managing and querying categories a
 ```json
 {
   "code":1,
-  "msg":"success",
+  "msg":"Dish enabled successfully",
   "data": null
 }
 ```
+
+#### 1.3. Query categories and dishes status (dashboard)
+
+**Purpose:** Query categories and dishes status.
+
+**Endpoint:** `/merchant/dashboard/categories`
+
+**Method:** `GET`
+
+**Headers:**
+- Authorization: Bearer {accessToken}
+- X-Refresh-Token: Bearer {refreshToken}
+
+**Response Body Format:** HTTP Header
+
+**Request Body Sample:**
+```shell
+/merchant/dashboard/categories
+```
+
+**Response Body Format:** `application/json`
+
+**Response Body Description:**
+| Parameter       | Type        | Required   | Description                                   |
+| --------------- | ----------- | ---------- | --------------------------------------------- |
+| `code`          | number      | Yes        | Response code: 1 = success; 0 = failure       |
+| `msg`           | string      | nO         | Message                                       |
+| `data`          | object      | Yes        | Returned data                                 |
+| └─ `categoryTotal` | number   | Yes        | Number of categories                          |
+| └─ `dishTotal`  | number      | Yes        | Number of dishes                              |
+| └─ `categoryActive` | number  | Yes        | Number of actived categories                  |
+| └─ `dishActive` | number      | Yes        | Number of actived dishes                      |
+
+**Response Body Sample:**
+```json
+{
+  "code": 1,
+  "message": "Success",
+  "data": {
+    "categoryTotal": 5,
+    "dishTotal": 10,
+    "categoryActive": 4,
+    "dishActive": 8
+  }
+}
+```
+
 
 ### 2. Client Restaurant & Category & Dish Query
 

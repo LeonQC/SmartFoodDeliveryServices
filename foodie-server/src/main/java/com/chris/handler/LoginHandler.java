@@ -2,7 +2,7 @@ package com.chris.handler;
 
 import com.chris.dto.LoginDTO;
 import com.chris.enumeration.LoginType;
-import com.chris.vo.UserInfoVO;
+import com.chris.vo.loginVOs.UserInfoVO;
 
 public interface LoginHandler {
     /**

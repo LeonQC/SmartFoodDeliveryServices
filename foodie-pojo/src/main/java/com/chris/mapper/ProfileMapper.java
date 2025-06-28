@@ -1,7 +1,7 @@
 package com.chris.mapper;
 
 import com.chris.dto.ProfileUpdateDTO;
-import com.chris.vo.MerchantVO;
+import com.chris.vo.profileVOs.MerchantVO;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -9,9 +9,9 @@ import com.chris.entity.User;
 import com.chris.entity.Merchant;
 import com.chris.entity.Client;
 import com.chris.entity.Rider;
-import com.chris.vo.ProfileVO;
-import com.chris.vo.ClientVO;
-import com.chris.vo.RiderVO;
+import com.chris.vo.profileVOs.ProfileVO;
+import com.chris.vo.profileVOs.ClientVO;
+import com.chris.vo.profileVOs.RiderVO;
 import org.mapstruct.MappingTarget;
 import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 
@@ -19,18 +19,19 @@ import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 public interface ProfileMapper {
 
     @Mapping(expression = "java(user.getRole().name())", target = "role")
+    @Mapping(expression = "java(user.getClient() != null ? toClientVO(user.getClient()) : null)", target = "client")
+    @Mapping(expression = "java(user.getMerchant() != null ? toMerchantVO(user.getMerchant()) : null)", target = "merchant")
+    @Mapping(expression = "java(user.getRider() != null ? toRiderVO(user.getRider()) : null)", target = "rider")
     ProfileVO toProfileVO(User user);
 
     MerchantVO toMerchantVO(Merchant merchant);
     ClientVO   toClientVO(Client client);
     RiderVO    toRiderVO(Rider rider);
 
-    // 新增：DTO 更新到 User
     @BeanMapping(nullValuePropertyMappingStrategy = IGNORE)
     @Mapping(target = "profileCompleted", constant = "true")
     void updateUserFromDto(ProfileUpdateDTO dto, @MappingTarget User user);
 
-    // 新增：DTO 更新到 Merchant（忽略 null 字段）
     @BeanMapping(nullValuePropertyMappingStrategy = IGNORE)
     void updateMerchantFromDto(ProfileUpdateDTO dto, @MappingTarget Merchant merchant);
 

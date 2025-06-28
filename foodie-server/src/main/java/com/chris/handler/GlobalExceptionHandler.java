@@ -1,7 +1,7 @@
 package com.chris.handler;
 
 import com.chris.exception.CustomizedBaseException;
-import com.chris.vo.Result;
+import com.chris.vo.resultVOs.Result;
 import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
