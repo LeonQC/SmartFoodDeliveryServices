@@ -3,7 +3,7 @@ package com.chris.handler;
 import com.chris.enumeration.LoginType;
 import com.chris.dto.LoginDTO;
 import com.chris.service.LoginService;
-import com.chris.vo.UserInfoVO;
+import com.chris.vo.loginVOs.UserInfoVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

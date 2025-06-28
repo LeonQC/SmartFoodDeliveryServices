@@ -1,4 +1,4 @@
-package com.chris.vo;
+package com.chris.vo.profileVOs;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;

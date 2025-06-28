@@ -31,4 +31,16 @@ public class MessageConstant {
     public static final String USER_NOT_FOUND = "User doesn't exist";
 
     public static final String USER_PROFILE_INCOMPLETE = "User profile is not complete";
+
+    public static final String USER_IS_NOT_MERCHANT = "The user is not merchant";
+
+    public static final String CATEGORY_ALREADY_EXIST = "The category is already existed";
+
+    public static final String CATEGORY_NOT_FOUND = "The category is not found";
+
+    public static final String DISH_NOT_FOUND = "The dish is not found";
+
+    public static final String ORDER_NOT_FOUND = "The order is not found";
+
+    public static final String ORDER_STATUS_CHANGE_FAILED = "Can't change to the new status from current status";
 }

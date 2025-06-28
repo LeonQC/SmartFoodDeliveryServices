@@ -15,7 +15,7 @@ spring:
       # update：如上所述，在启动时 “增量” 修改表结构，添加缺失的表/列/索引，但不删列、不改列类型。
       # create：启动时先删表（DROP），再根据所有实体 CREATE TABLE，相当于 “全量重建”。（原有数据会全部丢失）
       # create-drop：跟 create 一样的行为，但会在 SessionFactory 关闭或应用 Context 结束时，再执行一次 DROP ALL TABLES，常用于测试环境。
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.spatial.dialect.postgis.PostgisPG95Dialect
@@ -42,3 +42,5 @@ jwt:
 google:
   oauth:
     client-id: ${chris.google.oauth.client-id}
+  maps:
+    api-key: ${chris.google.maps.api-key}

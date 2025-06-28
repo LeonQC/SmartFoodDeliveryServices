@@ -25,8 +25,6 @@ public interface RegistrationMapper {
     @Mapping(source = "city",                 target = "city")
     @Mapping(source = "state",                target = "state")
     @Mapping(source = "country",              target = "country")
-    @Mapping(source = "longitude",            target = "longitude")
-    @Mapping(source = "latitude",             target = "latitude")
     @Mapping(source = "merchantName",         target = "merchantName")
     @Mapping(source = "zipcode",              target = "zipcode")
     @Mapping(source = "merchantDescription",  target = "merchantDescription")
@@ -35,8 +33,6 @@ public interface RegistrationMapper {
     @Mapping(source = "merchantSocialMedia",  target = "merchantSocialMedia")
     @Mapping(source = "merchantOpeningHours", target = "merchantOpeningHours")
     @Mapping(constant = "0", target = "merchantStatus")
-    @Mapping(target = "location",
-             expression = "java(com.chris.utils.GeoUtil.makePoint(dto.getLongitude(), dto.getLatitude()))")
     Merchant toMerchant(RegistrationDTO dto);
 
     // Client 专属映射

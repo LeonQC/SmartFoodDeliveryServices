@@ -33,12 +33,6 @@ public class ProfileUpdateDTO {
     @NotBlank(groups = MerchantGroup.class)
     private String country;
 
-    @NotNull(groups = MerchantGroup.class)
-    private Double longitude;
-
-    @NotNull(groups = MerchantGroup.class)
-    private Double latitude;
-
     @NotBlank(groups = MerchantGroup.class)
     private String merchantName;
 
@@ -47,6 +41,7 @@ public class ProfileUpdateDTO {
     private String merchantDescription;
     private String merchantImage;
     private String merchantType;
+    private String merchantSocialMedia;
 
     @NotEmpty(groups = MerchantGroup.class)
     private Map<String,String> merchantOpeningHours;

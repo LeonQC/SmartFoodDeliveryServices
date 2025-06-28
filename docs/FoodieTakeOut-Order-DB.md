@@ -11,15 +11,17 @@ This document outlines the database schema for the order module, which includes 
 | `id`             | BIGSERIAL                   | PRIMARY KEY                          | Unique order identifier                                                               |
 | `client_id`      | BIGINT                      | NOT NULL, REFERENCES `clients(id)`   | The customer who placed the order                                                     |
 | `merchant_id`    | BIGINT                      | NOT NULL, REFERENCES `merchants(id)` | The merchant accepting/preparing the order                                            |
-| `rider_id`       | BIGINT                      | NULL, REFERENCES `riders(id)`        | The delivery rider (filled in once the order is accepted)                             |
 | `status`         | SMALLINT                    | NOT NULL                             | Order status (e.g. 0=pending, 1= paid, 2=accepted, 3=Ready to go, 4=picking up by rider, 5=out of delivery, 6=delivered (completed), 7=canceled) |
 | `total_amount`   | NUMERIC(10,2)               | NOT NULL                             | Total amount of the order                                                             |
 | `delivery_fee`   | NUMERIC(10,2)               | NOT NULL                             | Delivery fee                                                                          |
 | `payment_method` | VARCHAR(20)                 | NOT NULL                             | Payment method (e.g. ApplePay, credit card, balance)                                  |
-| `paid_at`        | TIMESTAMP WITHOUT TIME ZONE | NULL                                 | Time when payment was made                                                            |
-| `address_id`     | INTEGER                     | NOT NULL, REFERENCES `client_addresses(id)` | Foreign key reference to the customer's shipping address                        |
-| `create_time`    | TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()               | Order creation timestamp                                                              |
-| `update_time`    | TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()               | Last update timestamp                                                                 |
+| `paid_at`        | TIMESTAMP(0) WITHOUT TIME ZONE | NULL                              | Time when payment was made                                                            |
+| `pay_status`     | SMALLINT                    | NOT NULL                             | Payment status (e.g. 0=pending, 1=paid, 2=refund)                                     |
+| `estimate_delivery_time` | TIMESTAMP(0) WITHOUT TIME ZONE | NULL                      | Estimated time of delivered                                                           |
+| `address_id`     | INTEGER                     | NOT NULL, REFERENCES `client_addresses(id)` | Foreign key reference to the customer's shipping address                       |
+| `remark`         | TEXT                        |                                      | Any additional notes or instructions for the order                                    |
+| `create_time`    | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Order creation timestamp                                                              |
+| `update_time`    | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Last update timestamp                                                                 |
 
 **Indexes:**  
 - **PRIMARY KEY** on `id`
@@ -36,21 +38,22 @@ CREATE TABLE orders (
   id              BIGSERIAL PRIMARY KEY,
   client_id       BIGINT       NOT NULL REFERENCES clients(id),
   merchant_id     BIGINT       NOT NULL REFERENCES merchants(id),
-  rider_id        BIGINT       REFERENCES riders(id),
   status          SMALLINT     NOT NULL,
   total_amount    NUMERIC(10,2) NOT NULL,
   delivery_fee    NUMERIC(10,2) NOT NULL,
   payment_method  VARCHAR(20)  NOT NULL,
-  paid_at         TIMESTAMP WITHOUT TIME ZONE,
+  paid_at         TIMESTAMP(0) WITHOUT TIME ZONE,
+  pay_status      SMALLINT     NOT NULL,
+  estimate_delivery_time TIMESTAMP(0) WITHOUT TIME ZONE,
   address_id      BIGINT        NOT NULL REFERENCES client_addresses(id),
-  create_time     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-  update_time     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+  remark          TEXT,
+  create_time     TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+  update_time     TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2. 索引
 CREATE INDEX idx_orders_client_id   ON orders(client_id);
 CREATE INDEX idx_orders_merchant_id ON orders(merchant_id);
-CREATE INDEX idx_orders_rider_id    ON orders(rider_id);
 CREATE INDEX idx_orders_status      ON orders(status);
 CREATE INDEX idx_orders_address_id  ON orders(address_id);
 
@@ -61,13 +64,15 @@ COMMENT ON TABLE orders IS 'Orders table representing customer orders';
 COMMENT ON COLUMN orders.id             IS 'Unique order identifier';
 COMMENT ON COLUMN orders.client_id      IS 'The customer who placed the order';
 COMMENT ON COLUMN orders.merchant_id    IS 'The merchant accepting/preparing the order';
-COMMENT ON COLUMN orders.rider_id       IS 'The delivery rider (filled in once the order is accepted)';
 COMMENT ON COLUMN orders.status         IS 'Order status (e.g. 0=pending, 1= paid, 2=accepted (preparing), 3=Ready to go, 4=picking up by rider, 5=out of delivery, 6=delivered (completed), 7=canceled)';
 COMMENT ON COLUMN orders.total_amount   IS 'Total amount of the order';
 COMMENT ON COLUMN orders.delivery_fee   IS 'Delivery fee';
 COMMENT ON COLUMN orders.payment_method IS 'Payment method (e.g. WeChat, Alipay, balance)';
 COMMENT ON COLUMN orders.paid_at        IS 'Time when payment was made';
-COMMENT ON COLUMN orders.delivery_addr  IS 'Delivery address the customer used for this order';
+COMMENT ON COLUMN orders.pay_status     IS 'Payment status (e.g. 0=pending, 1=paid, 2=refund)';
+COMMENT ON COLUMN orders.estimate_delivery_time IS 'Estimated time of delivered';
+COMMENT ON COLUMN orders.address_id     IS 'Delivery address the customer used for this order';
+COMMENT ON COLUMN orders.remark         IS 'Any additional notes or instructions for the order';
 COMMENT ON COLUMN orders.create_time    IS 'Order creation timestamp';
 COMMENT ON COLUMN orders.update_time    IS 'Last update timestamp';
 ```
@@ -84,7 +89,7 @@ COMMENT ON COLUMN orders.update_time    IS 'Last update timestamp';
 | `quantity`   | INTEGER                     | NOT NULL                          | Quantity                                              |
 | `subtotal`   | NUMERIC(10,2)               | NOT NULL                          | Subtotal (calculated as `unit_price * quantity`)      |
 | `remark`     | VARCHAR(255)                |                                   | Remark for the dish (e.g., extra spice, no scallions) |
-| `create_time`| TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Entry timestamp                                       |
+| `create_time`| TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Entry timestamp                                       |
 
 **Indexes:**  
 - **PRIMARY KEY** on `id`
@@ -103,7 +108,7 @@ CREATE TABLE order_items (
   quantity    INTEGER   NOT NULL,
   subtotal    NUMERIC(10,2) NOT NULL,
   remark      VARCHAR(255),
-  create_time TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+  create_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2. 索引
@@ -135,7 +140,7 @@ COMMENT ON COLUMN order_items.create_time IS 'Entry timestamp';
 | `to_status`   | SMALLINT                    | NOT NULL                          | The status code after the change                               |
 | `changed_by`  | VARCHAR(50)                 | NOT NULL                          | Who made the change (`user`, `merchant`, `rider`, or `system`) |
 | `remark`      | VARCHAR(255)                |                                   | Optional remark or note about the status change                |
-| `changed_at`  | TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Timestamp when the status change occurred                      |
+| `changed_at`  | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Timestamp when the status change occurred                      |
 
 **Indexes:**  
 - **PRIMARY KEY** on `id`
@@ -153,7 +158,7 @@ CREATE TABLE order_status_log (
   to_status    SMALLINT                     NOT NULL,
   changed_by   VARCHAR(50)                  NOT NULL,
   remark       VARCHAR(255),
-  changed_at   TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT NOW()
+  changed_at   TIMESTAMP(0) WITHOUT TIME ZONE  NOT NULL DEFAULT NOW()
 );
 
 -- 2. 索引
@@ -165,7 +170,7 @@ CREATE INDEX idx_order_status_log_changed_by ON order_status_log(changed_by);
 COMMENT ON TABLE order_status_log IS 'Order status change history log';
 
 -- 4. 字段注释
-COMMENT ON COLUMN order_status_log.log_id       IS 'Unique identifier for each status change record';
+COMMENT ON COLUMN order_status_log.id           IS 'Unique identifier for each status change record';
 COMMENT ON COLUMN order_status_log.order_id     IS 'The order to which this status change applies';
 COMMENT ON COLUMN order_status_log.from_status  IS 'The status code before the change';
 COMMENT ON COLUMN order_status_log.to_status    IS 'The status code after the change';
@@ -183,7 +188,7 @@ COMMENT ON COLUMN order_status_log.changed_at   IS 'Timestamp when the status ch
 | `order_id`   | BIGINT                      | NOT NULL, REFERENCES `orders(id)` | The order being assigned                                       |
 | `rider_id`   | BIGINT                      | NOT NULL, REFERENCES `riders(id)` | The rider who is being offered this order                      |
 | `status`     | SMALLINT                    | NOT NULL                          | Assignment result (0 = no response, 1 = accepted, 2 = refused) |
-| `attempt_at` | TIMESTAMP WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Timestamp when the assignment was attempted                    |
+| `attempt_at` | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Timestamp when the assignment was attempted                    |
 
 **Indexes:**  
 - **PRIMARY KEY** on `id`
@@ -199,7 +204,7 @@ CREATE TABLE rider_assignments (
   order_id    BIGINT                        NOT NULL REFERENCES orders(id),
   rider_id    BIGINT                        NOT NULL REFERENCES riders(id),
   status      SMALLINT                      NOT NULL,
-  attempt_at  TIMESTAMP WITHOUT TIME ZONE   NOT NULL DEFAULT NOW()
+  attempt_at  TIMESTAMP(0) WITHOUT TIME ZONE   NOT NULL DEFAULT NOW()
 );
 
 -- 2. 索引

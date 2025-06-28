@@ -16,11 +16,12 @@ This document outlines the API endpoints for the order-related features, which i
 
 2. **Merchant Order Module**
    1. Query orders (with filters & pagination)
-   2. Orders statistics by status
+   2. Orders statistics by status (Dashboard)
    3. View order details
    4. Confirm order
    5. Reject order
    6. Mark order ready for pickup
+   7. Ongoing orders query (Dashboard)
 
 3. **Rider Order Module**
    1. Accept order
@@ -485,11 +486,11 @@ This document outlines the API endpoints for the order-related features, which i
 }  
 ```
 
-#### 2.2. Orders Statistics by Status
+#### 2.2. Orders Statistics by Status (dashboard)
 
-**Purpose:** Get counts of orders grouped by status for a merchant within an optional date range.
+**Purpose:** Get counts of orders and other related statistics for a merchant within an optional date range.
 
-**Endpoint:** `/merchant/orders/statistics`
+**Endpoint:** `/merchant/dashboard/orders`
 
 **Method:** `GET`
 
@@ -497,22 +498,11 @@ This document outlines the API endpoints for the order-related features, which i
 - Authorization: Bearer {accessToken}
 - X-Refresh-Token: Bearer {refreshToken}
 
-**Request Parameter Format:** `Query Parameters`
-
-**Request Parameter Description:**
-| Parameter | Type   | Required | Description                                                                             |
-| --------- | ------ | -------- | --------------------------------------------------------------------------------------- |
-| `period`  | string | Yes      | Time window for statistics. One of:                                                     |
-|           |        |          | • `1d` – last 1 day                                                                     |
-|           |        |          | • `7d` – last 7 days                                                                    |
-|           |        |          | • `1m` – last 1 month                                                                   |
-|           |        |          | • `3m` – last 3 months                                                                  |
-|           |        |          | • `6m` – last 6 months                                                                  |
-|           |        |          | • `1y` – last 1 year                                                                    |
+**Request Parameter Format:** HTTP Header
 
 **Request Body Sample:**
 ```shell
-/merchant/orders/statistics?period=1d
+/merchant/dashboard/orders
 ```
 
 **Response Parameter Description:**
@@ -521,36 +511,20 @@ This document outlines the API endpoints for the order-related features, which i
 | `code`            | number  | Yes      | 1 = success; 0 = failure          |
 | `msg`             | string  | No       | Human-readable message            |
 | `data`            | object  | Yes      | Status counts object              |
-| └─ `statusCounts` | object  | Yes      | Map of status code to order count |
-| └─── `0`          | integer | Yes      | Number of pending orders          |
-| └─── `1`          | integer | Yes      | Number of paid orders             |
-| └─── `2`          | integer | Yes      | Number of accepted orders         |
-| └─── `3`          | integer | Yes      | Number of ready orders            |
-| └─── `4`          | integer | Yes      | Number of waiting for rider orders|
-| └─── `5`          | integer | Yes      | Number of out of delivery orders  |
-| └─── `6`          | integer | Yes      | Number of completed orders        |
-| └─── `7`          | integer | Yes      | Number of cancelled orders        |
+| └─ `revenue`      | number  | Yes      | Total revenue of today            |
+| └─ `validOrders`  | number  | Yes      | Valid orders of today             |
+| └─ `avgPrice`     | number  | Yes      | Average price of each order       |
+| └─ `completionRate`| number | Yes      | Orders completion rate of today   |
+| └─ `newUsers`     | number  | Yes      | New users of today                |
+| └─ `paidCount`        | number  | Yes      | Currently paid orders (waiting for being accept), status = 1            |
+| └─ `preparingCount`   | number  | Yes      | Currently preparing orders (waiting for being ready), status = 2        |
+| └─ `readyToGoCount`   | number  | Yes      | Currently ready orders (waiting for being assignedto rider), status = 3 |
+| └─ `pickingUpCount`   | number  | Yes      | Currently picking up orders (waiting for being picked up), status = 4   |
+| └─ `dispatchingCount` | number  | Yes      | Currently dispatching orders (out of delivery), status = 5              |
+| └─ `completedCount`   | number  | Yes      | Currently completed orders (delivered), status = 6                      |
+| └─ `cancelledCount`   | number  | Yes      | Currently cancelled orders (cancelled or rejected), status = 7          |
+| └─ `totalCount`       | number  | Yes      | Currently total orders                                                  |
 
-
-**Response Body Sample:**
-```json
-{
-  "code": 1,
-  "msg": "success",
-  "data": {
-    "statusCounts": {
-      "0": 3,
-      "1": 5,
-      "2": 18,
-      "3": 3,
-      "4": 5,
-      "5": 5,
-      "6": 128,
-      "7": 5
-    }
-  }
-}
-```
 
 #### 2.3. View Order Details
 
@@ -572,59 +546,41 @@ This document outlines the API endpoints for the order-related features, which i
 ```
 
 **Response Parameter Description:**
-| Parameter          | Type    | Required | Description              |
-| ------------------ | ------- | -------- | ------------------------ |
-| `code`             | number  | Yes      | 1 = success; 0 = failure |
-| `msg`              | string  | No       | Human-readable message   |
-| `data`             | object  | Yes      | Detailed order object    |
-| └─ `id`            | integer | Yes      | Order ID                 |
-| └─ `clientId`      | integer | Yes      | ID of the client         |
-| └─ `clientUsername`| string  | Yes      | Name of the client       |
-| └─ `status`        | number  | Yes      | Current status code      |
-| └─ `totalAmount`   | number  | Yes      | Total amount             |
-| └─ `deliveryFee`   | number  | Yes      | Delivery fee             |
-| └─ `paymentMethod` | string  | Yes      | Payment method           |
-| └─ `paidAt`        | string  | No       | Payment timestamp        |
-| └─ `items`         | array   | Yes      | List of order items      |
-| └─── `dishId`      | integer | Yes      | Dish ID                  |
-| └─── `dishName`    | string  | Yes      | Dish name (snapshot)     |
-| └─── `unitPrice`   | number  | Yes      | Unit price               |
-| └─── `quantity`    | integer | Yes      | Quantity ordered         |
-| └─── `subtotal`    | number  | Yes      | Subtotal                 |
-| └─ `createTime`    | string  | Yes      | Creation timestamp       |
-| └─ `updateTime`    | string  | Yes      | Last update timestamp    |
-
-**Response Body Sample:**
-```json
-{
-  "code": 1,
-  "msg": "success",
-  "data": {
-    "id": 4001,
-    "clientId": 1001,
-    "clientName": "AliceZhang",
-    "status": 1,
-    "totalAmount": 29.99,
-    "deliveryFee": 5.00,
-    "paymentMethod": "ApplePay",
-    "paidAt": "2025-06-16T10:02:00.000Z",
-    "items": [
-      {
-        "dishId": 3001,
-        "dishName": "Kung Pao Chicken",
-        "unitPrice": 12.50,
-        "quantity": 2,
-        "subtotal": 25.00
-      }
-    ],
-    "createTime": "2025-06-16T10:00:00.000Z",
-    "updateTime": "2025-06-16T10:00:00.000Z"
-  }
-}
-```
+| Parameter          | Type    | Required | Description                      |
+| ------------------ | ------- | -------- | ------------------------         |
+| `code`             | number  | Yes      | 1 = success; 0 = failure         |
+| `msg`              | string  | No       | Human-readable message           |
+| `data`             | object  | Yes      | Detailed order object            |
+| └─ `orderId`       | integer | Yes      | Order ID                         |
+| └─ `clientPhone`   | string  | Yes      | Phone number of the client       |
+| └─ `items`         | object[]| Yes      | List of items in the order       |
+| └─── `dishName`    | String  | Yes      | Dish name of the item            |
+| └─── `quantity`    | String  | Yes      | Quantity of the item             |
+| └─── `unitPrice`   | String  | Yes      | Unit price of the item           |
+| └─── `subtotal`    | String  | Yes      | Subtotal of the item             |
+| └─── `remark`      | String  | No       | Remark of the item               |
+| └─ `address`       | object[]| Yes      | Current address info of the item |
+| └─── `recipient`   | String  | Yes      | Recipient name                   |
+| └─── `phone`       | String  | Yes      | Phone number                     |
+| └─── `addressLine1`| String  | Yes      | Address line 1                   |
+| └─── `addressLine2`| String  | No       | Address line 2                   |
+| └─── `city`        | String  | Yes      | City                             |
+| └─── `state`       | String  | Yes      | State                            |
+| └─ `status`        | number  | Yes      | Current status code              |
+| └─ `totalAmount`   | number  | Yes      | Total amount                     |
+| └─ `deliveryFee`   | number  | Yes      | Delivery fee                     |
+| └─ `paymentMethod` | string  | Yes      | Payment method                   |
+| └─ `paidAt`        | string  | No       | Payment timestamp                |
+| └─ `remark`        | string  | Yes      | Remark of the order              |
+| └─ `statusLogs`    | object[]| Yes      | Order status logs                |
+| └─── `fromStatus`  | string  | Yes      | From status                      |
+| └─── `toStatus`    | string  | Yes      | To status                        |
+| └─── `changedBy`   | string  | Yes      | Operator                         |
+| └─── `remark`      | string  | Yes      | Remark of the order status change|
+| └─── `changedAt`   | string  | Yes      | Order status change timestamp    |
 
 
-#### 2.4. Confirm Order
+#### 2.4. Accept Order
 
 **Purpose:** Merchant confirms and accepts the specified order.
 
@@ -644,8 +600,8 @@ This document outlines the API endpoints for the order-related features, which i
 | Path `orderId` | integer | Yes      | ID of the order to confirm |
 
 **Request Body Sample:**
-```json
-{}
+```shell
+/merchant/orders/1/accept
 ```
 
 **Response Parameter Description:**
@@ -659,7 +615,7 @@ This document outlines the API endpoints for the order-related features, which i
 ```json
 {
   "code": 1,
-  "msg": "Order confirmed successfully",
+  "msg": "Order accepted",
   "data": null
 }
 ```
@@ -676,7 +632,7 @@ This document outlines the API endpoints for the order-related features, which i
 - Authorization: Bearer {accessToken}
 - X-Refresh-Token: Bearer {refreshToken}
 
-**Request Parameter Format:** `Path Variable`
+**Request Parameter Format:** `Path Variable` + `application/json`
 
 **Request Parameter Description:**
 | Parameter      | Type    | Required | Description               |
@@ -699,7 +655,7 @@ This document outlines the API endpoints for the order-related features, which i
 ```json
 {
   "code": 1,
-  "msg": "Order rejected successfully",
+  "msg": "Order rejected",
   "data": null
 }
 ```
@@ -743,6 +699,48 @@ This document outlines the API endpoints for the order-related features, which i
   "data": null
 }
 ```
+
+#### 2.7. Ongoing orders query (Dashboard)
+
+**Purpose:** Query ongoing orders
+
+**Endpoint:** `/merchant/orders`
+
+**Method:** `GET`
+
+**Headers:**
+- Authorization: Bearer {accessToken}
+- X-Refresh-Token: Bearer {refreshToken}
+
+**Request Parameter Format:** `Query Parameter`
+
+**Request Parameter Description:**
+| Parameter              | Type    | Required | Description               |
+| ---------------------- | ------- | -------- | ------------------------- |
+| RequestParam `status`  | integer | Yes      | status of the order       |
+
+**Request Body Sample:**
+```shell
+/merchant/orders/1
+```
+
+**Response Parameter Description:**
+| Parameter | Type   | Required | Description              |
+| --------- | ------ | -------- | ------------------------ |
+| `code`    | number | Yes      | 1 = success; 0 = failure |
+| `msg`     | string | No       | message                  |
+| `data`    | object[] | Yes      | return data              |
+| └─ `orderId` | number    | Yes    | order id                               |
+| └─ `items`   | string    | Yes    | items in the order, separated by commas|
+| └─ `itemRemarks` | string    | Yes    | item remarks, separated by commas  |
+| └─ `paidAt`  | string    | Yes    | client paid time                       |
+| └─ `eta`     | string    | Yes    | order estimate arriving time           |
+| └─ `amount`  | number    | Yes    | order total fee                        |
+| └─ `status`  | number    | Yes    | order status                           |
+| └─ `attemptedAt` | string    | Yes    | rider assigned time                |
+| └─ `riderAssignmentId` | number    | Yes    | rider assignment id (identifier to check rider) |
+| └─ `remark`  | string    | No     | remark given by client                 |
+
 
 ### 3. Rider Order Module
 
@@ -897,7 +895,7 @@ N/A
 | `data`             | object | Yes      | Route information                |
 | └─ `route`         | array  | Yes      | Array of \[lat, lng] coordinates |
 | └─ `distance`      | number | Yes      | Total distance in meters         |
-| └─ `estimatedTime` | number | Yes      | Estimated time in seconds        |
+| └─ `estimatedTime` | string | Yes      | Estimated time in seconds        |
 
 **Response Body Sample:**
 ```json

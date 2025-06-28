@@ -13,7 +13,7 @@ import com.chris.repository.UserRepository;
 import com.chris.service.GoogleOAuthService;
 import com.chris.service.LoginService;
 import com.chris.utils.JwtTokenUtil;
-import com.chris.vo.UserInfoVO;
+import com.chris.vo.loginVOs.UserInfoVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -98,11 +98,23 @@ public class LoginServiceImpl implements LoginService {
         // 填充返回 VO
         UserInfoVO vo = new UserInfoVO();
         vo.setUsername(user.getUsername());
-        vo.setEmail(user.getEmail());
         vo.setRole(user.getRole().name());
         vo.setAccessToken(at);
         vo.setRefreshToken(rt);
         vo.setNeedsProfileCompletion(!user.getProfileCompleted());
+
+        switch (user.getRole()) {
+            case MERCHANT -> {
+                vo.setImage(user.getMerchant().getMerchantImage());
+            }
+            case CLIENT -> {
+                vo.setImage(user.getClient().getAvatar());
+            }
+            case RIDER -> {
+                vo.setImage(user.getRider().getAvatar());
+            }
+        }
+
         return vo;
     }
 
@@ -158,7 +170,6 @@ public class LoginServiceImpl implements LoginService {
                 user.setRider(r);
             }
         }
-
         return userRepository.save(user);
     }
     /**

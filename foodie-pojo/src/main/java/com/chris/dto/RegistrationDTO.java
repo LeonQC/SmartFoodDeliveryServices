@@ -35,12 +35,6 @@ public class RegistrationDTO {
     @NotBlank(groups = MerchantGroup.class)
     private String country;
 
-    @NotNull(groups = MerchantGroup.class)
-    private Double longitude;
-
-    @NotNull(groups = MerchantGroup.class)
-    private Double latitude;
-
     @NotBlank(groups = MerchantGroup.class)
     private String merchantName;
 

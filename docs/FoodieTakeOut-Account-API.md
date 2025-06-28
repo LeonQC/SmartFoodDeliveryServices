@@ -10,10 +10,11 @@ This document outlines the API endpoints for the account-related functions, whic
    3. Logout as merchant/client/rider
    4. View and update profile
 
-2. **Status Module**   
-   1. Merchant status change
-   2. Rider status change
-   3. Get rider current position
+2. **Status Module**
+   1. Get merchant status
+   2. Merchant status change
+   3. Rider status change
+   4. Get rider current position
 
 ## API Endpoints
 
@@ -359,7 +360,42 @@ This document outlines the API endpoints for the account-related functions, whic
 
 ### 2. Status Module
 
-#### 2.1. Merchant Status Change
+#### 2.1. Get Merchant Status
+
+**Purpose:** Get the current status of restaurant.
+
+**Endpoint:** `/merchant/status`
+
+**Method:** `GET`
+
+**Headers:**
+- Authorization: Bearer {accessToken}
+- X-Refresh-Token: Bearer {refreshToken}
+
+**Request Parameter Format:** HTTP Header
+
+**Request Body Sample:**
+```shell
+/merchant/status
+```
+
+**Response Parameter Description:**
+| Parameter | Type   | Required | Description              |
+| --------- | ------ | -------- | ------------------------ |
+| `code`    | number | Yes      | 1 = success; 0 = failure |
+| `msg`     | string | No       | message                  |
+| `data`    | null   | No       | Data                     |
+
+**Response Body Sample:**
+```json
+{
+  "code": 1,
+  "msg": null,
+  "data": null
+}
+```
+
+#### 2.2. Merchant Status Change
 
 **Purpose:** Merchant sets their restaurants opening or closed status.
 
@@ -389,12 +425,12 @@ This document outlines the API endpoints for the account-related functions, whic
 ```json
 {
   "code": 1,
-  "msg": "Merchant status updated to closed",
+  "msg": "Restaurant is closed",
   "data": null
 }
 ```
 
-#### 2.2. Rider Status Change
+#### 2.3. Rider Status Change
 
 **Purpose:** Rider sets themselves online or offline (start/stop receiving new orders).
 
@@ -429,7 +465,7 @@ This document outlines the API endpoints for the account-related functions, whic
 }
 ```
 
-#### 2.3. Get Rider Current Location
+#### 2.4. Get Rider Current Location
 
 **Purpose:** Allow the dispatch system to fetch the rider's real-time GPS coordinates while they are active, so the server can push nearby orders.
 

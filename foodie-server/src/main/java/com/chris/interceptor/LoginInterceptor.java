@@ -3,7 +3,6 @@ package com.chris.interceptor;
 import com.chris.context.UserContext;
 import com.chris.exception.InvalidTokenException;
 import com.chris.exception.MissingTokenException;
-import com.chris.exception.ProfileIncompleteException;
 import com.chris.repository.UserRepository;
 import com.chris.utils.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
@@ -22,13 +21,10 @@ import static com.chris.constant.JwtClaimsConstant.USER_ID;
 import static com.chris.constant.MessageConstant.*;
 
 @Component
-public class AuthInterceptor implements HandlerInterceptor {
+public class LoginInterceptor implements HandlerInterceptor {
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Override
     public boolean preHandle(HttpServletRequest request,
@@ -50,9 +46,8 @@ public class AuthInterceptor implements HandlerInterceptor {
             userId = tryRefreshAndGetUserId(request, response, e.getMessage());
         }
 
-        // —— 2. 把 userId 放入 ThreadLocal，并做 profileCompleted 校验 ——
+        // —— 2. 把 userId 放入 ThreadLocal ——
         UserContext.setCurrentId(userId);
-        checkProfileCompleted(userId);
 
         return true;
     }
@@ -83,14 +78,6 @@ public class AuthInterceptor implements HandlerInterceptor {
         } catch (InvalidTokenException e) {
             throw new InvalidTokenException("[" + originalMsg + "] and [" + e.getMessage() + "]");
         }
-    }
-
-    private void checkProfileCompleted(Long userId) {
-        userRepository.findById(userId).ifPresent(user -> {
-            if (!user.getProfileCompleted()) {
-                throw new ProfileIncompleteException(USER_PROFILE_INCOMPLETE);
-            }
-        });
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.chris.vo;
+package com.chris.vo.loginVOs;
 
 import lombok.Data;
 
@@ -7,7 +7,7 @@ public class UserInfoVO {
 
     private String username;
 
-    private String email;
+    private String image;
 
     private String role;
 
