@@ -7,31 +7,43 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Result {
+public class Result<T> {
 
-    private Integer code; //编码：1成功，0为失败
-    private String msg; //错误信息
-    private Object data; //数据
+    private Integer code;
+    private String msg;
+    private T data;
 
-    public static Result success() {
-        Result result = new Result();
+    public static <T> Result<T> success() {
+        Result<T> result = new Result<>();
         result.code = 1;
-        result.msg = "success";
         return result;
     }
 
-    public static Result success(Object object) {
-        Result result = new Result();
+    public static <T> Result<T> success(String msg) {
+        Result<T> result = new Result<>();
+        result.code = 1;
+        result.msg = msg;
+        return result;
+    }
+
+    public static <T> Result<T> success(T object) {
+        Result<T> result = new Result<>();
         result.data = object;
         result.code = 1;
-        result.msg = "success";
         return result;
     }
 
-    public static Result error(String msg) {
-        Result result = new Result();
+    public static <T> Result<T> error(int code, String msg) {
+        Result<T> result = new Result<>();
+        result.code = code;
         result.msg = msg;
+        return result;
+    }
+
+    public static <T> Result<T> error(String msg) {
+        Result<T> result = new Result<>();
         result.code = 0;
+        result.msg = msg;
         return result;
     }
 
