@@ -80,5 +80,5 @@ chris:
       secret-access-key: ${chris.aws.s3.secret-access-key}
 
   stripe:
-    secret-key: sk_test_51RjAiIKbrVIE4EurnvuyyehCC7TdGqF8vR8A0i1JeR6yyXXzeHtoqPLHgQWjHDUk8SYXf6Pg3ol3KSuyrRwac1fj00D1mCdZEL
-    webhook-secret: whsec_60cc6fa7cc67e49cfbd2b52a11f41f3a1c860f8540d0d05c51fdd96870154330 # Stripe 控制台 Webhook Signing Secret
+    secret-key: ${chris.stripe.secret-key}
+    webhook-secret: ${chris.stripe.webhook-secret}
