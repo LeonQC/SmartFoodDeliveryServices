@@ -710,7 +710,7 @@ This document describes the API endpoints for managing and querying categories a
 <!-- 需要给Merchant添加type字段，requestParameter中可选typeId -->
 **Purpose:** Retrieve a paginated, sorted, and filtered list of all restaurants based on restaurant <!-- typeId, --> name, and status. Restaurants must be within 10 km of the user's location.
 
-**Endpoint:** `/client/restaurants`
+**Endpoint:** `/client/browse`
 
 **Method:** `GET`
 
@@ -785,7 +785,7 @@ This document describes the API endpoints for managing and querying categories a
 <!-- 还可为merchant增加参数：评分，点赞，销量，评价数。用以选择sorting类型 -->
 **Purpose:** Retrieve a paginated, sorted, and filtered list of all restaurants sorted by distance from a specified location.
 
-**Endpoint:** `/client/restaurants/of/distance`
+**Endpoint:** `/client/browse/of/distance`
 
 **Method:** `GET`
 
@@ -807,7 +807,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Request Body Sample:**
 ```shell
-/client/restaurants/of/distance?page=1&pageSize=10&x=0.0&y=0.0
+/client/browse/of/distance?page=1&pageSize=10&x=0.0&y=0.0
 ```
 
 **Response Body Format:** `application/json`
@@ -860,7 +860,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Purpose:** Retrieve a restaurant in details by merchant ID. Client can go into the restaurant's page and view categories and dishes of the restaurant.
 
-**Endpoint:** `/client/restaurants/{merchantId}`
+**Endpoint:** `/client/browse/merchants/{merchantId}`
 
 **Method:** `GET`
 
@@ -877,7 +877,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Request Body Sample:**
 ```shell
-/client/restaurants/1
+/client/browse/merchants/1
 ```
 
 **Response Body Format:** `application/json`
@@ -947,7 +947,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Request Body Sample:**
 ```shell
-/client/restaurants/{merchantId}/categories
+/client/browse/merchants/{merchantId}/categories
 ```
 
 **Response Body Format:** `application/json`
@@ -1012,7 +1012,7 @@ This document describes the API endpoints for managing and querying categories a
 
 **Request Body Sample:**
 ```shell
-/client/restaurants/{merchantId}/categories/{categoryId}/dishes
+/client/browse/merchants/{merchantId}/categories/{categoryId}/dishes
 ```
 
 **Response Body Format:** `application/json`

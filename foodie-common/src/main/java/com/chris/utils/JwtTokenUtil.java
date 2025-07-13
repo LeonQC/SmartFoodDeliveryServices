@@ -6,9 +6,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.Getter;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -16,29 +14,22 @@ import java.util.Map;
 
 import static com.chris.constant.MessageConstant.*;
 
-@Component
+@Getter
 public class JwtTokenUtil {
 
-    @Value("${jwt.secret-base64}")
-    private String secretKey;
+    private final SecretKey accessKey;
+    private final SecretKey refreshKey;
+    private final long accessExpirationSeconds;
+    private final long refreshExpirationSeconds;
 
-    @Value("${jwt.access-expiration-seconds}")
-    private long accessExpirationSeconds;
-
-    @Value("${jwt.refresh-expiration-seconds}")
-    private long refreshExpirationSeconds;
-
-    private static SecretKey accessKey;
-    private static SecretKey refreshKey;
-
-    @PostConstruct
-    public void init() {
-        // Base64 解码成 byte[]
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-
-        // 创建 HMAC 密钥
-        accessKey = Keys.hmacShaKeyFor(keyBytes);
-        refreshKey = Keys.hmacShaKeyFor(keyBytes);
+    public JwtTokenUtil(String base64Secret,
+                        long accessExpirationSeconds,
+                        long refreshExpirationSeconds) {
+        byte[] keyBytes = Decoders.BASE64.decode(base64Secret);
+        this.accessKey = Keys.hmacShaKeyFor(keyBytes);
+        this.refreshKey = Keys.hmacShaKeyFor(keyBytes);
+        this.accessExpirationSeconds = accessExpirationSeconds;
+        this.refreshExpirationSeconds = refreshExpirationSeconds;
     }
 
     public String generateAccessToken(Map<String, Object> claims) {

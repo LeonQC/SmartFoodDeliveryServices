@@ -14,7 +14,7 @@ This document outlines the database schema for the order module, which includes 
 | `status`         | SMALLINT                    | NOT NULL                             | Order status (e.g. 0=pending, 1= paid, 2=accepted, 3=Ready to go, 4=picking up by rider, 5=out of delivery, 6=delivered (completed), 7=canceled) |
 | `total_amount`   | NUMERIC(10,2)               | NOT NULL                             | Total amount of the order                                                             |
 | `delivery_fee`   | NUMERIC(10,2)               | NOT NULL                             | Delivery fee                                                                          |
-| `payment_method` | VARCHAR(20)                 | NOT NULL                             | Payment method (e.g. ApplePay, credit card, balance)                                  |
+| `payment_method` | VARCHAR(20)                 |                                      | Payment method (e.g. ApplePay, credit card, balance)                                  |
 | `paid_at`        | TIMESTAMP(0) WITHOUT TIME ZONE | NULL                              | Time when payment was made                                                            |
 | `pay_status`     | SMALLINT                    | NOT NULL                             | Payment status (e.g. 0=pending, 1=paid, 2=refund)                                     |
 | `estimate_delivery_time` | TIMESTAMP(0) WITHOUT TIME ZONE | NULL                      | Estimated time of delivered                                                           |
@@ -22,6 +22,7 @@ This document outlines the database schema for the order module, which includes 
 | `remark`         | TEXT                        |                                      | Any additional notes or instructions for the order                                    |
 | `create_time`    | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Order creation timestamp                                                              |
 | `update_time`    | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Last update timestamp                                                                 |
+| `payment_intent_id` | VARCHAR(64)              |                                      | Payment intent ID for the order                                                       |
 
 **Indexes:**  
 - **PRIMARY KEY** on `id`
@@ -41,14 +42,15 @@ CREATE TABLE orders (
   status          SMALLINT     NOT NULL,
   total_amount    NUMERIC(10,2) NOT NULL,
   delivery_fee    NUMERIC(10,2) NOT NULL,
-  payment_method  VARCHAR(20)  NOT NULL,
+  payment_method  VARCHAR(20)  ,
   paid_at         TIMESTAMP(0) WITHOUT TIME ZONE,
   pay_status      SMALLINT     NOT NULL,
   estimate_delivery_time TIMESTAMP(0) WITHOUT TIME ZONE,
   address_id      BIGINT        NOT NULL REFERENCES client_addresses(id),
   remark          TEXT,
   create_time     TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-  update_time     TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+  update_time     TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+  payment_intent_id VARCHAR(64)
 );
 
 -- 2. 索引
@@ -75,6 +77,7 @@ COMMENT ON COLUMN orders.address_id     IS 'Delivery address the customer used f
 COMMENT ON COLUMN orders.remark         IS 'Any additional notes or instructions for the order';
 COMMENT ON COLUMN orders.create_time    IS 'Order creation timestamp';
 COMMENT ON COLUMN orders.update_time    IS 'Last update timestamp';
+COMMENT ON COLUMN orders.payment_intent_id IS 'Payment intent ID for the order';
 ```
 
 ### Table: order_items
@@ -136,7 +139,7 @@ COMMENT ON COLUMN order_items.create_time IS 'Entry timestamp';
 | ------------- | --------------------------- | --------------------------------- | -------------------------------------------------------------- |
 | `id`          | BIGSERIAL                   | PRIMARY KEY                       | Unique identifier for each status change record                |
 | `order_id`    | BIGINT                      | NOT NULL, REFERENCES `orders(id)` | The order to which this status change applies                  |
-| `from_status` | SMALLINT                    | NOT NULL                          | The status code before the change                              |
+| `from_status` | SMALLINT                    |                                   | The status code before the change                              |
 | `to_status`   | SMALLINT                    | NOT NULL                          | The status code after the change                               |
 | `changed_by`  | VARCHAR(50)                 | NOT NULL                          | Who made the change (`user`, `merchant`, `rider`, or `system`) |
 | `remark`      | VARCHAR(255)                |                                   | Optional remark or note about the status change                |
@@ -154,7 +157,7 @@ COMMENT ON COLUMN order_items.create_time IS 'Entry timestamp';
 CREATE TABLE order_status_log (
   id           BIGSERIAL                    PRIMARY KEY,
   order_id     BIGINT                       NOT NULL REFERENCES orders(id),
-  from_status  SMALLINT                     NOT NULL,
+  from_status  SMALLINT                     ,
   to_status    SMALLINT                     NOT NULL,
   changed_by   VARCHAR(50)                  NOT NULL,
   remark       VARCHAR(255),

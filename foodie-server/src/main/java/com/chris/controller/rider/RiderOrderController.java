@@ -1,11 +1,9 @@
-package com.chris.controller.common;
+package com.chris.controller.rider;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/upload")
-public class UploadImageController {
-
-    //TODO: AWS S3 存储图片
+@RequestMapping("/rider/order")
+public class RiderOrderController {
 }

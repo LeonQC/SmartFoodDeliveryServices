@@ -64,6 +64,9 @@ public class Order {
     @Column(name = "pay_status", nullable = false)
     private Short payStatus;
 
+    @Column(name = "payment_intent_id")
+    private String paymentIntentId;
+
     @Column(name = "estimate_delivery_time")
     private LocalDateTime estimateDeliveryTime;
 

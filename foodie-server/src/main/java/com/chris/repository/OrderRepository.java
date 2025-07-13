@@ -3,6 +3,7 @@ package com.chris.repository;
 import com.chris.entity.Order;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,7 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     List<Order> findByMerchantUserUserIdAndCreateTimeBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
     List<Order> findByMerchantUserUserIdAndCreateTimeBefore(Long userId, LocalDateTime start);

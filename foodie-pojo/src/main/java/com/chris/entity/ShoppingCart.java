@@ -14,10 +14,11 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "carts")
-public class Cart {
+public class ShoppingCart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long cartId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -36,9 +37,6 @@ public class Cart {
 
     @Column(nullable = false)
     private Integer quantity;
-
-    @Column
-    private String remark;
 
     @CreationTimestamp
     @Column(name = "create_time", nullable = false, updatable = false)
