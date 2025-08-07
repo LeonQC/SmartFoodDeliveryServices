@@ -33,11 +33,14 @@ public interface ProfileMapper {
     void updateUserFromDto(ProfileUpdateDTO dto, @MappingTarget User user);
 
     @BeanMapping(nullValuePropertyMappingStrategy = IGNORE)
+    @Mapping(target = "merchantImage", ignore = true)
     void updateMerchantFromDto(ProfileUpdateDTO dto, @MappingTarget Merchant merchant);
 
     @BeanMapping(nullValuePropertyMappingStrategy = IGNORE)
+    @Mapping(target = "avatar", ignore = true)
     void updateClientFromDto(ProfileUpdateDTO dto, @MappingTarget Client client);
 
     @BeanMapping(nullValuePropertyMappingStrategy = IGNORE)
+    @Mapping(target = "avatar", ignore = true)
     void updateRiderFromDto(ProfileUpdateDTO dto, @MappingTarget Rider rider);
 }

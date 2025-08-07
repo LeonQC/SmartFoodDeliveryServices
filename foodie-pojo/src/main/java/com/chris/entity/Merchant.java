@@ -82,4 +82,9 @@ public class Merchant {
 
     @OneToMany(mappedBy = "merchant", fetch = FetchType.LAZY)
     private List<Order> orders;
+
+    /*private Integer likeCount;
+    private Integer favoriteCount;
+    private Integer commentCount;
+    private Double  rating;*/
 }

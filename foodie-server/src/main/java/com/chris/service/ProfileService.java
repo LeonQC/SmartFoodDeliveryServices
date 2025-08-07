@@ -6,5 +6,5 @@ import com.chris.vo.profileVOs.ProfileVO;
 public interface ProfileService {
     ProfileVO getProfile(Long userId);
 
-    ProfileVO updateProfile(Long userId, ProfileUpdateDTO dto);
+    void updateProfile(Long userId, ProfileUpdateDTO dto);
 }

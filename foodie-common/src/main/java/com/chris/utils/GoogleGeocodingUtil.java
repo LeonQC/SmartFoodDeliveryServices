@@ -1,23 +1,26 @@
 package com.chris.utils;
 
+import com.chris.properties.GoogleGeocodingProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-@Component
+@Getter
 public class GoogleGeocodingUtil {
 
-    @Value("${chris.google.maps.api-key}")
-    private String apiKey;
+    private final String apiKey;
+
+    public GoogleGeocodingUtil(GoogleGeocodingProperties props) {
+        this.apiKey = props.getApiKey();
+    }
 
     public Optional<double[]> fetchLatLng(String address) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {

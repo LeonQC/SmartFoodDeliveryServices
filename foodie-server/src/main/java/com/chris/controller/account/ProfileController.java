@@ -27,9 +27,9 @@ public class ProfileController {
 
     @PutMapping
     @Operation(summary = "Update profile", description = "Update the profile of current user")
-    public Result<ProfileVO> updateProfile(@RequestBody @Valid ProfileUpdateDTO dto) {
+    public Result<String> updateProfile(@RequestBody @Valid ProfileUpdateDTO dto) {
         Long userId = UserContext.getCurrentId();
-        ProfileVO profile = profileService.updateProfile(userId, dto);
+        profileService.updateProfile(userId, dto);
         return Result.success("Profile updated successfully");
     }
 }

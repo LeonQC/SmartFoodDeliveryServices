@@ -14,9 +14,8 @@ This document outlines the database schema for the shopping cart module and addr
 | `dish_name`  | VARCHAR(100)                | NOT NULL                           | Snapshot of the dish name at time of adding  |
 | `unit_price` | NUMERIC(10,2)               | NOT NULL                           | Snapshot of the dish price at time of adding |
 | `quantity`   | INTEGER                     | NOT NULL                           | Quantity the client intends to order         |
-| `remark`     | VARCHAR(255)                |                                    | Any special request (e.g., “no onions”)      |
-| `create_time`| TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this item was first added               |
-| `update_time`| TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | Last time quantity or remark was updated     |
+| `create_time`| TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()          | When this item was first added               |
+| `update_time`| TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()          | Last time quantity or remark was updated     |
 
 **Indexes:**
 - **PRIMARY KEY** on `id`
@@ -33,7 +32,6 @@ CREATE TABLE carts (
   dish_name   VARCHAR(100) NOT NULL,
   unit_price  NUMERIC(10,2) NOT NULL,
   quantity    INTEGER   NOT NULL,
-  remark      VARCHAR(255),
   create_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
   update_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -48,7 +46,6 @@ COMMENT ON COLUMN carts.dish_id     IS 'The dish being added';
 COMMENT ON COLUMN carts.dish_name   IS 'Snapshot of dish name when added';
 COMMENT ON COLUMN carts.unit_price  IS 'Snapshot of dish price when added';
 COMMENT ON COLUMN carts.quantity    IS 'Desired quantity';
-COMMENT ON COLUMN carts.remark      IS 'Special requests';
 COMMENT ON COLUMN carts.create_time IS 'Time item was added';
 COMMENT ON COLUMN carts.update_time IS 'Time item was last updated';
 ```
@@ -68,11 +65,9 @@ COMMENT ON COLUMN carts.update_time IS 'Time item was last updated';
 | `state`         | VARCHAR(50)                 | NOT NULL                           | State / Province                         |
 | `zipcode`       | VARCHAR(20)                 |                                    | Postal code                              |
 | `country`       | VARCHAR(50)                 | NOT NULL                           | Country                                  |
-| `latitude`      | DOUBLE PRECISION            |                                    | Coordinate for map integration           |
-| `longitude`     | DOUBLE PRECISION            |                                    | Coordinate for map integration           |
 | `is_default`    | BOOLEAN                     | NOT NULL DEFAULT FALSE             | Whether this is the default address      |
-| `create_time`   | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this address was added              |
-| `update_time`   | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()             | When this address was last updated       |
+| `create_time`   | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()          | When this address was added              |
+| `update_time`   | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()          | When this address was last updated       |
 
 **Indexes:**
 - **PRIMARY KEY** on `id`
@@ -94,8 +89,6 @@ CREATE TABLE client_addresses (
   state          VARCHAR(50)  NOT NULL,
   zipcode        VARCHAR(20),
   country        VARCHAR(50)  NOT NULL,
-  latitude       DOUBLE PRECISION,
-  longitude      DOUBLE PRECISION,
   is_default     BOOLEAN     NOT NULL DEFAULT FALSE,
   create_time    TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
   update_time    TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
@@ -116,8 +109,6 @@ COMMENT ON COLUMN client_addresses.city           IS 'City';
 COMMENT ON COLUMN client_addresses.state          IS 'State or province';
 COMMENT ON COLUMN client_addresses.zipcode        IS 'Postal code';
 COMMENT ON COLUMN client_addresses.country        IS 'Country';
-COMMENT ON COLUMN client_addresses.latitude       IS 'Latitude for geolocation';
-COMMENT ON COLUMN client_addresses.longitude      IS 'Longitude for geolocation';
 COMMENT ON COLUMN client_addresses.is_default     IS 'Marks default address';
 COMMENT ON COLUMN client_addresses.create_time    IS 'Time address was added';
 COMMENT ON COLUMN client_addresses.update_time    IS 'Time address was last updated';

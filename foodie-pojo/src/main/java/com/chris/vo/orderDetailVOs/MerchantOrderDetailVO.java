@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderDetailVO {
+public class MerchantOrderDetailVO {
     private Long orderId;
     private String clientPhone;        // 下单人手机号
     private List<OrderItemVO> items;   // 菜品 + 单价 + 数量 + 小计 + 备注
@@ -20,6 +20,7 @@ public class OrderDetailVO {
     private BigDecimal deliveryFee;
     private String paymentMethod;
     private LocalDateTime paidAt;
+    private Short payStatus;
     private Short status;
     private String remark;
     private String riderPhone;

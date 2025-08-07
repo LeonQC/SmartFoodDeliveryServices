@@ -4,10 +4,7 @@ import com.chris.entity.Order;
 import com.chris.entity.AddressBook;
 import com.chris.entity.OrderItem;
 import com.chris.entity.OrderStatusLog;
-import com.chris.vo.orderDetailVOs.AddressBookVO;
-import com.chris.vo.orderDetailVOs.OrderDetailVO;
-import com.chris.vo.orderDetailVOs.OrderItemVO;
-import com.chris.vo.orderDetailVOs.OrderStatusLogVO;
+import com.chris.vo.orderDetailVOs.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -17,7 +14,11 @@ import java.util.List;
 public interface OrderDetailMapper {
 
     @Mapping(target = "clientPhone", source = "client.phone")
-    OrderDetailVO toOrderDetailVO(Order order);
+    MerchantOrderDetailVO toMerchantOrderDetailVO(Order order);
+
+    @Mapping(target = "merchantName", source = "merchant.merchantName")
+    @Mapping(target = "merchantPhone", source = "merchant.phone")
+    ClientOrderDetailVO toClientOrderDetailVO(Order order);
 
     @Mapping(target = "dishName", source = "dish.name")
     OrderItemVO toOrderItemVO(OrderItem item);

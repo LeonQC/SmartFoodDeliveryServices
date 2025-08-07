@@ -46,5 +46,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     ORDER BY t.first_date
     """, nativeQuery = true)
     List<Object[]> findNewUserTrendByUser(@Param("userId") Long userId, @Param("startDate") LocalDate startDate);
+
 }
 

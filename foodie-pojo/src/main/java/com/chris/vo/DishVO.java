@@ -16,6 +16,4 @@ public class DishVO {
     private Short status;
     private String image;
     private String description;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 }

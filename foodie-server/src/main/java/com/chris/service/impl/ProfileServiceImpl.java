@@ -7,6 +7,7 @@ import com.chris.exception.UserNotFoundException;
 import com.chris.mapper.ProfileMapper;
 import com.chris.repository.UserRepository;
 import com.chris.service.ProfileService;
+import com.chris.service.S3Service;
 import com.chris.utils.GeoUtil;
 import com.chris.utils.GoogleGeocodingUtil;
 import com.chris.vo.profileVOs.ProfileVO;
@@ -33,6 +34,9 @@ public class ProfileServiceImpl implements ProfileService {
     @Autowired
     private GoogleGeocodingUtil googleGeocodingUtil;
 
+    @Autowired
+    private S3Service s3Service;
+
     @Override
     @Transactional(readOnly = true)
     public ProfileVO getProfile(Long userId) {
@@ -43,7 +47,7 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional
-    public ProfileVO updateProfile(Long userId, ProfileUpdateDTO dto) {
+    public void updateProfile(Long userId, ProfileUpdateDTO dto) {
         User user = userRepository.findDetailedByUserId(userId)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
 
@@ -69,13 +73,56 @@ public class ProfileServiceImpl implements ProfileService {
                 m.setLatitude(coords[0]);
                 m.setLongitude(coords[1]);
                 m.setLocation(GeoUtil.makePoint(coords[1], coords[0]));
+
+                String oldKey = user.getMerchant().getMerchantImage();
+                String tempKey = dto.getMerchantImage();
+                if (tempKey != null && !tempKey.isBlank() && !tempKey.equals(oldKey)) {
+                    // 删掉旧的
+                    if (oldKey != null && !oldKey.isBlank()) {
+                        s3Service.deleteImage(oldKey);
+                    }
+                    // 持久化新的
+                    String permKey = s3Service.persistTemporaryImage(tempKey, "Merchants");
+                    user.getMerchant().setMerchantImage(permKey);
+                }
             }
-            case CLIENT   -> mapper.updateClientFromDto(dto, user.getClient());
-            case RIDER    -> mapper.updateRiderFromDto(dto, user.getRider());
+            case CLIENT -> {
+                mapper.updateClientFromDto(dto, user.getClient());
+
+                String oldKey = user.getClient().getAvatar();
+                String tempKey = dto.getAvatar(); // 前端传来的，回显时可能是永久 key
+
+                // 只有当 tempKey 真不一样，且非空，才做更新
+                if (tempKey != null && !tempKey.isBlank() && !tempKey.equals(oldKey)) {
+                    // 删掉旧的
+                    if (oldKey != null && !oldKey.isBlank()) {
+                        s3Service.deleteImage(oldKey);
+                    }
+                    // 持久化新的
+                    String permKey = s3Service.persistTemporaryImage(tempKey, "Clients");
+                    user.getClient().setAvatar(permKey);
+                }
+            }
+            case RIDER -> {
+                mapper.updateRiderFromDto(dto, user.getRider());
+                String oldKey = user.getRider().getAvatar();
+                String tempKey = dto.getAvatar();
+
+                // 只有当 tempKey 真不一样，且非空，才做更新
+                if (tempKey != null && !tempKey.isBlank() && !tempKey.equals(oldKey)) {
+                    // 删掉旧的
+                    if (oldKey != null && !oldKey.isBlank()) {
+                        s3Service.deleteImage(oldKey);
+                    }
+                    // 持久化新的
+                    String permKey = s3Service.persistTemporaryImage(tempKey, "Riders");
+                    user.getRider().setAvatar(permKey);
+                }
+            }
         }
         // 3. 持久化并返回最新的 VO
         user = userRepository.save(user);
-        return mapper.toProfileVO(user);
+        mapper.toProfileVO(user);
     }
 
     private String buildFullAddress(String address, String city, String state, String zipcode, String country) {

@@ -3,7 +3,6 @@ package com.chris.interceptor;
 import com.chris.context.UserContext;
 import com.chris.exception.InvalidTokenException;
 import com.chris.exception.MissingTokenException;
-import com.chris.repository.UserRepository;
 import com.chris.utils.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;

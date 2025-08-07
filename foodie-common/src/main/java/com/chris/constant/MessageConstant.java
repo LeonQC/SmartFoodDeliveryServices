@@ -43,4 +43,18 @@ public class MessageConstant {
     public static final String ORDER_NOT_FOUND = "The order is not found";
 
     public static final String ORDER_STATUS_CHANGE_FAILED = "Can't change to the new status from current status";
+
+    public static final String MERCHANT_NOT_FOUND = "The merchant is not found";
+
+    public static final String CART_ITEM_NOT_FOUND = "Cart item not found";
+
+    public static final String CART_ITEM_EXISTED = "Item already in cart";
+
+    public static final String USER_IS_NOT_CLIENT = "The user is not client";
+
+    public static final String ADDRESS_NOT_FOUND = "Address is not found";
+
+    public static final String SURPASSED_DELIVERY_DISTANCE = "Address is not within the delivery distance";
+
+    public static final String DISH_NOT_ON_SALE = "Dish is not on sale";
 }

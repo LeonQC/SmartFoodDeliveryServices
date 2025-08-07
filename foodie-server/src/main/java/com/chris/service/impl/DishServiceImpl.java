@@ -38,6 +38,8 @@ public class DishServiceImpl implements DishService {
     private DishRepository dishRepository;
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private S3ServiceImpl s3Service;
 
     @Override
     @Transactional(readOnly = true)
@@ -85,6 +87,12 @@ public class DishServiceImpl implements DishService {
     @Override
     @Transactional
     public void deleteDishes(Long[] dishIds) {
+        // 1. 删除S3中的图片
+        List<Dish> dishes = dishRepository.findAllById(List.of(dishIds));
+        for (Dish dish : dishes) {
+            s3Service.deleteImage(dish.getImage());
+        }
+        // 2. 删除数据库中的dishes
         dishRepository.deleteAllById(List.of(dishIds));
     }
 
@@ -99,7 +107,12 @@ public class DishServiceImpl implements DishService {
                 .orElseThrow(() -> new CategoryNotFoundException(CATEGORY_NOT_FOUND));
         // 3. 关联
         dish.setCategory(category);
-        // 4. 保存
+
+        // 4. 持久化S3中的imageKey
+        String permKey = s3Service.persistTemporaryImage(dto.getImage(), "Dishes");
+        dish.setImage(permKey);
+
+        // 5. 保存
         dishRepository.save(dish);
     }
 
@@ -124,6 +137,20 @@ public class DishServiceImpl implements DishService {
                     .orElseThrow(() -> new CategoryNotFoundException(CATEGORY_NOT_FOUND));
             dish.setCategory(category);
         }
+
+        // 3. 判断图片是否更新
+        String oldKey  = dish.getImage();
+        String tempKey = dto.getImage();
+        if (tempKey != null && !tempKey.isBlank() && !tempKey.equals(oldKey)) {
+            // 4. 删除旧的
+            if (oldKey != null && !oldKey.isBlank()) {
+                s3Service.deleteImage(oldKey);
+            }
+            // 5. 持久化新的
+            String permKey = s3Service.persistTemporaryImage(tempKey, "Dishes");
+            dish.setImage(permKey);
+        }
+        // 6. 映射其他字段
         dishMapper.updateDishFromDTO(dto, dish);
     }
 

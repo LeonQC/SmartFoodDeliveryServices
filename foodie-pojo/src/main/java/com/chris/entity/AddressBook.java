@@ -51,12 +51,6 @@ public class AddressBook {
     @Column(nullable = false)
     private String country;
 
-    @Column
-    private Double latitude;
-
-    @Column
-    private Double longitude;
-
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault;
 
