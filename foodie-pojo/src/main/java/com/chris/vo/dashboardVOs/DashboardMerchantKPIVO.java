@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DashboardOrderMetricsVO {
+public class DashboardMerchantKPIVO {
     // 今日营业额
     private BigDecimal revenue;
     // 今日有效订单数（已支付且未取消的）

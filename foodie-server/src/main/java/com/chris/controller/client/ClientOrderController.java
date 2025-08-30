@@ -5,6 +5,7 @@ import com.chris.dto.OrderCancelDTO;
 import com.chris.dto.OrderSubmitDTO;
 import com.chris.dto.OrderPayDTO;
 import com.chris.dto.groups.ClientOrderDTO;
+import com.chris.service.ETAService;
 import com.chris.service.OrderService;
 import com.chris.vo.ClientOrderVO;
 import com.chris.vo.OrderPayVO;
@@ -22,6 +23,15 @@ import java.time.LocalDateTime;
 public class ClientOrderController {
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private ETAService etaService;
+
+    @GetMapping("/eta")
+    public Result<Long> getOrderETA(@RequestParam Long merchantId, @RequestParam Long addressId) {
+        long etaMinutes = etaService.estimateDeliveryTime(merchantId, addressId, UserContext.getCurrentId());
+        return Result.success(etaMinutes);
+    }
 
     @PostMapping("/submit")
     public Result<OrderSubmitVO> submitOrder(@RequestBody OrderSubmitDTO dto) {

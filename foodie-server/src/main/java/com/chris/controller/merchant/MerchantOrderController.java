@@ -3,7 +3,7 @@ package com.chris.controller.merchant;
 import com.chris.context.UserContext;
 import com.chris.dto.RejectOrderDTO;
 import com.chris.service.OrderService;
-import com.chris.vo.dashboardVOs.DashboardOngoingOrderVO;
+import com.chris.vo.MerchantOrderVO;
 import com.chris.vo.orderDetailVOs.MerchantOrderDetailVO;
 import com.chris.vo.resultVOs.Result;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,9 +22,9 @@ public class MerchantOrderController {
 
     @GetMapping
     @Operation(summary = "Query ongoing orders", description = "Query orders for the current merchant by status, used by merchant dashboard")
-    public Result<List<DashboardOngoingOrderVO>> getOngoingOrders(@RequestParam Short status) {
+    public Result<List<MerchantOrderVO>> listOrdersForMerchant(@RequestParam Short status) {
         Long userId = UserContext.getCurrentId();
-        List<DashboardOngoingOrderVO> orders = orderService.getOngoingOrders(userId, status);
+        List<MerchantOrderVO> orders = orderService.listOrdersForMerchant(userId, status);
         return Result.success(orders);
     }
 
@@ -32,18 +32,15 @@ public class MerchantOrderController {
     @Operation(summary = "Merchant accepts an order", description = "Change order status from PAID to ACCEPTED")
     public Result<String> acceptOrder(@PathVariable Long orderId) {
         Long userId = UserContext.getCurrentId();
-        orderService.acceptOrder(userId, orderId);
+        orderService.merchantAcceptOrder(userId, orderId);
         return Result.success("Order accepted");
     }
 
     @PostMapping("/{orderId}/reject")
     @Operation(summary = "Merchant rejects an order", description = "Change order status from PAID to CANCELLED")
     public Result<String> reject(@PathVariable Long orderId, @RequestBody RejectOrderDTO reason) {
-
-        // TODO: trigger refund to client.
-
         Long userId = UserContext.getCurrentId();
-        orderService.rejectOrder(userId, orderId, reason);
+        orderService.merchantRejectOrder(userId, orderId, reason);
         return Result.success("Order rejected");
     }
 

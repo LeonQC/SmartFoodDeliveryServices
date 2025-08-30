@@ -20,6 +20,27 @@ spring:
       hibernate:
         dialect: org.hibernate.spatial.dialect.postgis.PostgisPG95Dialect
 
+  #配置Redis
+  data:
+    redis:
+      host: 192.168.100.128
+      port: 6379
+      password:
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 10
+          min-idle: 1
+          max-wait: 1000ms
+          time-between-eviction-runs: 10s
+
+  #配置RabbitMQ
+  rabbitmq:
+    host: 192.168.100.128
+    port: 5672
+    username: root
+    password: 1234
+
   #文件上传配置
   servlet:
     multipart:
@@ -27,6 +48,8 @@ spring:
       max-request-size: 100MB #一次请求可以上传多个文件，总大小不超过100MB
 
   kafka:
+    admin:
+      auto-create: true
     bootstrap-servers: 192.168.100.128:9092,192.168.100.128:9093,192.168.100.128:9094
     producer:
       retries: 3
@@ -82,3 +105,6 @@ chris:
   stripe:
     secret-key: ${chris.stripe.secret-key}
     webhook-secret: ${chris.stripe.webhook-secret}
+
+  openai:
+    api-key: ${chris.openai.api-key}
