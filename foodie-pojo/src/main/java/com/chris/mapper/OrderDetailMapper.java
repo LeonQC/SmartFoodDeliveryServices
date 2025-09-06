@@ -20,6 +20,12 @@ public interface OrderDetailMapper {
     @Mapping(target = "merchantPhone", source = "merchant.phone")
     ClientOrderDetailVO toClientOrderDetailVO(Order order);
 
+    @Mapping(target = "merchantName", source = "merchant.merchantName")
+    @Mapping(target = "merchantPhone", source = "merchant.phone")
+    @Mapping(target = "merchantAddress", source = "merchant.address")
+    @Mapping(target = "clientPhone", source = "client.phone")
+    RiderOrderDetailVO toRiderOrderDetailVO(Order order);
+
     @Mapping(target = "dishName", source = "dish.name")
     OrderItemVO toOrderItemVO(OrderItem item);
 

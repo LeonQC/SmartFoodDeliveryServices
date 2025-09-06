@@ -1,4 +1,4 @@
-package com.chris.vo.dashboardVOs;
+package com.chris.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,10 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DashboardOngoingOrderVO {
-
-    // DashboardOngoingOrder必须字段
-
+public class MerchantOrderVO {
     private Long orderId;              // 订单ID
     private String clientPhone;        // 客户手机号
     private String items;              // 菜品名称列表 order -> orderItems -> dish.name
@@ -30,5 +27,4 @@ public class DashboardOngoingOrderVO {
     private String riderPhone;         // 骑手手机号 order -> riderAssignments -> rider -> phone
     private Short payStatus;
 
-    // Order Management 必须字段
 }

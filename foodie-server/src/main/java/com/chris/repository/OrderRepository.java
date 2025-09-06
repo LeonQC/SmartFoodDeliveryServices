@@ -1,5 +1,6 @@
 package com.chris.repository;
 
+import com.chris.dto.UserOrderHistoryDTO;
 import com.chris.entity.Order;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,4 +67,18 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     ORDER BY date
     """, nativeQuery = true)
     List<Object[]> findOrderTrendByUser(@Param("userId") Long userId,@Param("startDate") LocalDate start);
+
+
+    List<Order> findByRiderAssignmentsRiderUserUserIdAndStatusIn(Long userId, List<Short> statusList);
+
+    @Query("""
+      SELECT new com.chris.dto.UserOrderHistoryDTO(oi.dishName, SUM(oi.quantity))
+      FROM Order o
+      JOIN o.items oi
+      WHERE o.client.user.userId = :userId
+          AND o.createTime >= :startTime
+      GROUP BY oi.dishName
+      ORDER BY SUM(oi.quantity) DESC
+    """)
+    List<UserOrderHistoryDTO> findUserOrderHistory(@Param("userId") Long userId, @Param("startTime") LocalDateTime startTime);
 }

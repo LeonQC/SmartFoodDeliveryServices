@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderPaidEvent {
-    private String type = "NEW_ORDER";
+    private final String type = "NEW_ORDER";
     private Long orderId;              // 订单ID
     private String clientPhone;        // 客户手机号
     private String items;              // 菜品名称列表 order -> orderItems -> dish.name

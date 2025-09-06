@@ -190,7 +190,7 @@ COMMENT ON COLUMN order_status_log.changed_at   IS 'Timestamp when the status ch
 | `id`         | BIGSERIAL                   | PRIMARY KEY                       | Unique identifier for each assignment attempt                  |
 | `order_id`   | BIGINT                      | NOT NULL, REFERENCES `orders(id)` | The order being assigned                                       |
 | `rider_id`   | BIGINT                      | NOT NULL, REFERENCES `riders(id)` | The rider who is being offered this order                      |
-| `status`     | SMALLINT                    | NOT NULL                          | Assignment result (0 = no response, 1 = accepted, 2 = refused) |
+| `status`     | SMALLINT                    |                                   | Assignment result (1 = refused, 2 = no response, 3 = accepted) |
 | `attempt_at` | TIMESTAMP(0) WITHOUT TIME ZONE | NOT NULL DEFAULT NOW()            | Timestamp when the assignment was attempted                    |
 
 **Indexes:**  
@@ -206,7 +206,7 @@ CREATE TABLE rider_assignments (
   id          BIGSERIAL                     PRIMARY KEY,
   order_id    BIGINT                        NOT NULL REFERENCES orders(id),
   rider_id    BIGINT                        NOT NULL REFERENCES riders(id),
-  status      SMALLINT                      NOT NULL,
+  status      SMALLINT,
   attempt_at  TIMESTAMP(0) WITHOUT TIME ZONE   NOT NULL DEFAULT NOW()
 );
 
@@ -222,7 +222,7 @@ COMMENT ON TABLE rider_assignments IS 'Records each attempt to assign an order t
 COMMENT ON COLUMN rider_assignments.id         IS 'Unique identifier for each assignment attempt';
 COMMENT ON COLUMN rider_assignments.order_id   IS 'The order being assigned';
 COMMENT ON COLUMN rider_assignments.rider_id   IS 'The rider who is being offered this order';
-COMMENT ON COLUMN rider_assignments.status     IS 'Assignment result (0 = no response, 1 = accepted, 2 = refused)';
+COMMENT ON COLUMN rider_assignments.status     IS 'Assignment result (1 = refused, 2 = no response, 3 = accepted)';
 COMMENT ON COLUMN rider_assignments.attempt_at IS 'Timestamp when the assignment was attempted';
 ```
 

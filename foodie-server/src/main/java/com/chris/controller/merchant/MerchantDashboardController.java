@@ -4,7 +4,7 @@ import com.chris.context.UserContext;
 import com.chris.service.DishService;
 import com.chris.service.OrderService;
 import com.chris.vo.dashboardVOs.DashboardCategoryDishStatusVO;
-import com.chris.vo.dashboardVOs.DashboardOrderMetricsVO;
+import com.chris.vo.dashboardVOs.DashboardMerchantKPIVO;
 import com.chris.vo.resultVOs.Result;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/merchant/dashboard")
 @Tag(name = "DashboardController", description = "Dashboard-related APIs")
-public class DashboardController {
+public class MerchantDashboardController {
     @Autowired
     private DishService dishService;
     @Autowired
@@ -29,9 +29,9 @@ public class DashboardController {
     }
 
     @GetMapping("/orders")
-    public Result<DashboardOrderMetricsVO> getOrderMetrics() {
+    public Result<DashboardMerchantKPIVO> getMerchantDailyKPI() {
         Long userId = UserContext.getCurrentId();
-        DashboardOrderMetricsVO vo = orderService.getOrderMetrics(userId);
+        DashboardMerchantKPIVO vo = orderService.getMerchantDailyKPI(userId);
         return Result.success(vo);
     }
 }

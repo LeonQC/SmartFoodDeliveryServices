@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/merchant")
 @Tag(name = "StatusController", description = "Status-related APIs")
-public class StatusController {
+public class MerchantStatusController {
     @Autowired
     private MerchantService merchantService;
 
