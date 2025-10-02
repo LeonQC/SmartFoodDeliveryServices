@@ -1,31 +1,23 @@
 spring:
-  profiles:
-    active: dev
   datasource:
-    url: jdbc:postgresql://${chris.datasource.host}:${chris.datasource.port}/${chris.datasource.database}
-    username: ${chris.datasource.username}
-    password: ${chris.datasource.password}
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASS}
     driver-class-name: ${chris.datasource.driver-class-name}
 
   jpa:
     hibernate:
       ddl-auto: none
-      # none / 不设置：Hibernate 不对数据库做任何 schema 操作。
-      # validate：仅校验数据库表结构是否与实体映射一致，如果不一致就抛异常，不会自动建表或改表。
-      # update：如上所述，在启动时 “增量” 修改表结构，添加缺失的表/列/索引，但不删列、不改列类型。
-      # create：启动时先删表（DROP），再根据所有实体 CREATE TABLE，相当于 “全量重建”。（原有数据会全部丢失）
-      # create-drop：跟 create 一样的行为，但会在 SessionFactory 关闭或应用 Context 结束时，再执行一次 DROP ALL TABLES，常用于测试环境。
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.spatial.dialect.postgis.PostgisPG95Dialect
 
-  #配置Redis
   data:
     redis:
-      host: 192.168.100.128
-      port: 6379
-      password:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASS}
       lettuce:
         pool:
           max-active: 10
@@ -34,30 +26,28 @@ spring:
           max-wait: 1000ms
           time-between-eviction-runs: 10s
 
-  #配置RabbitMQ
   rabbitmq:
-    host: 192.168.100.128
-    port: 5672
-    username: root
-    password: 1234
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASS}
 
-  #文件上传配置
   servlet:
     multipart:
       max-file-size: 10MB
-      max-request-size: 100MB #一次请求可以上传多个文件，总大小不超过100MB
+      max-request-size: 100MB
 
   kafka:
     admin:
       auto-create: true
-    bootstrap-servers: 192.168.100.128:9092,192.168.100.128:9093,192.168.100.128:9094
+    bootstrap-servers: ${KAFKA_BOOTSTRAP}
     producer:
       retries: 3
       acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
-      group-id: merchant-service         # 消费者组名
+      group-id: merchant-service
       enable-auto-commit: true
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -76,35 +66,31 @@ resilience4j:
     instances:
       registerUpload:
         limit-for-period: 5
-        limit-refresh-period: 1d     # 匿名上传接口：1天 5 次
+        limit-refresh-period: 1d
         timeout-duration: 0
       userUpload:
         limit-for-period: 5
-        limit-refresh-period: 1m     # 用户上传接口：1分钟 5 次
+        limit-refresh-period: 1m
         timeout-duration: 0
 
 chris:
   jwt:
-    secret-base64: ${chris.jwt.secret-base64}
-    access-expiration-seconds: ${chris.jwt.access-expiration-seconds}     # Access Token 有效期 1 小时
-    refresh-expiration-seconds: ${chris.jwt.refresh-expiration-seconds}  # Refresh Token 有效期 1 天
-
+    secret-base64: ${CHRIS_JWT_SECRET_BASE64}
+    access-expiration-seconds: ${CHRIS_JWT_ACCESS_EXPIRATION_SECONDS}
+    refresh-expiration-seconds: ${CHRIS_JWT_REFRESH_EXPIRATION_SECONDS}
   google:
     oauth:
-      client-id: ${chris.google.oauth.client-id}
+      client-id: ${CHRIS_GOOGLE_OAUTH_CLIENT_ID}
     maps:
-      api-key: ${chris.google.maps.api-key}
-
+      api-key: ${CHRIS_GOOGLE_MAPS_API_KEY}
   aws:
     s3:
-      bucket: ${chris.aws.s3.bucket}
-      region: ${chris.aws.s3.region}
-      access-key-id: ${chris.aws.s3.access-key-id}
-      secret-access-key: ${chris.aws.s3.secret-access-key}
-
+      bucket: ${CHRIS_AWS_S3_BUCKET}
+      region: ${CHRIS_AWS_S3_REGION}
+      access-key-id: ${CHRIS_AWS_S3_ACCESS_KEY_ID}
+      secret-access-key: ${CHRIS_AWS_S3_SECRET_ACCESS_KEY}
   stripe:
-    secret-key: ${chris.stripe.secret-key}
-    webhook-secret: ${chris.stripe.webhook-secret}
-
+    secret-key: ${CHRIS_STRIPE_SECRET_KEY}
+    webhook-secret: ${CHRIS_STRIPE_WEBHOOK_SECRET}
   openai:
-    api-key: ${chris.openai.api-key}
+    api-key: ${CHRIS_OPENAI_API_KEY}
