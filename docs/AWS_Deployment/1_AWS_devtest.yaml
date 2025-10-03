@@ -1,0 +1,318 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+  Dev/Test AWS VPC, Multi-AZ Subnet, NAT, ALB, RDS, Redis, RabbitMQ, ECR for EKS/Fargate backend
+
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnetACidr:
+    Type: String
+    Default: 10.0.1.0/24
+  PublicSubnetBCidr:
+    Type: String
+    Default: 10.0.2.0/24
+  PrivateSubnetACidr:
+    Type: String
+    Default: 10.0.11.0/24
+  PrivateSubnetBCidr:
+    Type: String
+    Default: 10.0.12.0/24
+  AZA:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-2a
+  AZB:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-2b
+  DbUser:
+    Type: String
+    Default: devuser
+  DbPassword:
+    Type: String
+    Default: DevUser123!
+    NoEcho: true
+  RabbitUser:
+    Type: String
+    Default: admin
+  RabbitPassword:
+    Type: String
+    Default: RabbitAdmin123!
+    NoEcho: true
+
+Resources:
+
+  # 1. VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: dev-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Subnets
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetACidr
+      AvailabilityZone: !Ref AZA
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: dev-public-subnet-a
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetBCidr
+      AvailabilityZone: !Ref AZB
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: dev-public-subnet-b
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetACidr
+      AvailabilityZone: !Ref AZA
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: dev-private-subnet-a
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetBCidr
+      AvailabilityZone: !Ref AZB
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: dev-private-subnet-b
+
+  # RouteTables
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  # NAT Gateway (Zone A only)
+  NatEIPA:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      AllocationId: !GetAtt NatEIPA.AllocationId
+
+  PrivateRouteA:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayA
+
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTableA
+
+  # Only one NAT(Private B points to A's NAT)
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTableA
+
+  # 2. Security Groups
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP/HTTPS for ALB
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  PrivateAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Internal SG for backend (EKS, RDS, Redis, MQ)
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: !Ref VpcCidr
+
+  # 3. ALB
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: dev-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      IpAddressType: ipv4
+
+  # 4. RDS Postgres (Multi AZ)
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for dev RDS
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+      DBSubnetGroupName: dev-db-subnet-group
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: dev-postgres
+      Engine: postgres
+      EngineVersion: "15.14"
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: 20
+      MasterUsername: !Ref DbUser
+      MasterUserPassword: !Ref DbPassword
+      DBName: devdb
+      VPCSecurityGroups:
+        - !Ref PrivateAppSecurityGroup
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      PubliclyAccessible: false
+      MultiAZ: false
+
+  # 5. ElastiCache Redis (Multi AZ)
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet group for dev Redis
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  RedisCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      Engine: redis
+      CacheNodeType: cache.t3.micro
+      NumCacheNodes: 1
+      VpcSecurityGroupIds:
+        - !Ref PrivateAppSecurityGroup
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+
+  # 6. Amazon MQ (RabbitMQ) (Multi AZ)
+  RabbitMQBroker:
+    Type: AWS::AmazonMQ::Broker
+    Properties:
+      BrokerName: dev-rabbitmq
+      EngineType: RABBITMQ
+      EngineVersion: "3.13"
+      DeploymentMode: SINGLE_INSTANCE
+      HostInstanceType: mq.t3.micro
+      PubliclyAccessible: false
+      SubnetIds:
+        - !Ref PrivateSubnetA
+
+      SecurityGroups:
+        - !Ref PrivateAppSecurityGroup
+      Users:
+        - Username: !Ref RabbitUser
+          Password: !Ref RabbitPassword
+
+  # 7. ECR Registry
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: dev-ecr-backend
+
+Outputs:
+  VPCId:
+    Value: !Ref VPC
+  PublicSubnetAId:
+    Value: !Ref PublicSubnetA
+  PublicSubnetBId:
+    Value: !Ref PublicSubnetB
+  PrivateSubnetAId:
+    Value: !Ref PrivateSubnetA
+  PrivateSubnetBId:
+    Value: !Ref PrivateSubnetB
+  ALBSecurityGroupId:
+    Value: !Ref ALBSecurityGroup
+  PrivateAppSecurityGroupId:
+    Value: !Ref PrivateAppSecurityGroup
+  ALBName:
+    Value: !Ref ALB
+  RDSInstanceId:
+    Value: !Ref RDSInstance
+  RedisClusterId:
+    Value: !Ref RedisCluster
+  RabbitMQBrokerId:
+    Value: !Ref RabbitMQBroker
+  ECRRepositoryName:
+    Value: !Ref ECRRepository

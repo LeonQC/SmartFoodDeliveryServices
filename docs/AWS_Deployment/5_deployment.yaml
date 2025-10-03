@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: SmartFoodDelivery   # same with Service selector
+  template:
+    metadata:
+      labels:
+        app: SmartFoodDelivery  
+    spec:
+      containers:
+        - name: SmartFoodDelivery
+          image: 123456789012.dkr.ecr.us-east-2.amazonaws.com/my-springboot:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASS
+
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PORT
+            - name: REDIS_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: REDIS_PASS
+
+            - name: RABBITMQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_PORT
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_PASS
+
+            - name: KAFKA_BOOTSTRAP
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-config
+                  key: KAFKA_BOOTSTRAP
+
+            - name: chris.jwt.secret-base64
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_JWT_SECRET_BASE64
+            - name: chris.jwt.access-expiration-seconds
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_JWT_ACCESS_EXPIRATION_SECONDS
+            - name: chris.jwt.refresh-expiration-seconds
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_JWT_REFRESH_EXPIRATION_SECONDS
+
+            - name: chris.google.oauth.client-id
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_GOOGLE_OAUTH_CLIENT_ID
+            - name: chris.google.maps.api-key
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_GOOGLE_MAPS_API_KEY
+
+            - name: chris.aws.s3.bucket
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_AWS_S3_BUCKET
+            - name: chris.aws.s3.region
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_AWS_S3_REGION
+            - name: chris.aws.s3.access-key-id
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_AWS_S3_ACCESS_KEY_ID
+            - name: chris.aws.s3.secret-access-key
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_AWS_S3_SECRET_ACCESS_KEY
+
+            - name: chris.stripe.secret-key
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_STRIPE_SECRET_KEY
+            - name: chris.stripe.webhook-secret
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_STRIPE_WEBHOOK_SECRET
+
+            - name: chris.openai.api-key
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: CHRIS_OPENAI_API_KEY
