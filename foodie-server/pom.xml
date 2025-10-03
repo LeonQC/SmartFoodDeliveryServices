@@ -13,8 +13,6 @@
     <artifactId>foodie-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>foodie-take-out</name>
-    <description>foodie-take-out</description>
 
 
     <dependencies>
