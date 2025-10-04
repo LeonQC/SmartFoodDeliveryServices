@@ -3,11 +3,14 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /build
 COPY . .
 
-# 1) 先构建并安装所有依赖到本地仓库（不会对普通库模块做 repackage）
-RUN mvn -f foodie-parent/pom.xml -DskipTests clean install -am
+# 1) 只安装库模块到本地仓库（避免触发它们的 repackage）
+#    如果你的父POM是 foodie-parent/pom.xml，且库模块的artifactId为 foodie-pojo / foodie-common：
+RUN mvn -f foodie-parent/pom.xml -DskipTests -Dspring-boot.repackage.skip=true \
+    clean install -pl :foodie-pojo,:foodie-common -am
 
-# 2) 仅对可执行模块 repackage（不会波及 foodie-common/foodie-pojo）
-RUN mvn -f foodie-parent/pom.xml -DskipTests -pl :foodie-server -am spring-boot:repackage
+# 2) 进入可执行模块目录，仅对 foodie-server 打包 + repackage（不经过父工程reactor）
+WORKDIR /build/foodie-server
+RUN mvn -DskipTests clean package spring-boot:repackage
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jre-jammy
