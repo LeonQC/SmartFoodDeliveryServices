@@ -3,12 +3,11 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /build
 COPY . .
 
-# 先打整个工程（不跑 repackage），需要依赖的 jar 都会产出到本地仓库
-RUN mvn -f foodie-parent/pom.xml -DskipTests clean package -am
+# 1) 先构建并安装所有依赖到本地仓库（不会对普通库模块做 repackage）
+RUN mvn -f foodie-parent/pom.xml -DskipTests clean install -am
 
-# 仅在可执行模块里做 repackage（不会波及到 foodie-common）
-WORKDIR /build/foodie-server
-RUN mvn -DskipTests spring-boot:repackage
+# 2) 仅对可执行模块 repackage（不会波及 foodie-common/foodie-pojo）
+RUN mvn -f foodie-parent/pom.xml -DskipTests -pl :foodie-server -am spring-boot:repackage
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jre-jammy
