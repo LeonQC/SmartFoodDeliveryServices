@@ -3,7 +3,7 @@ spring:
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASS}
-    driver-class-name: ${chris.datasource.driver-class-name}
+    driver-class-name: ${CHRIS_DATASOURCE_DRIVER_CLASS_NAME}
 
   jpa:
     hibernate:
