@@ -99,3 +99,14 @@ chris:
     webhook-secret: ${CHRIS_STRIPE_WEBHOOK_SECRET}
   openai:
     api-key: ${CHRIS_OPENAI_API_KEY}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      probe:
+        enabled: true
