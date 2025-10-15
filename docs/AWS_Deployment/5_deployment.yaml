@@ -1,22 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-backend
+  name: smartfooddelivery-backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: SmartFoodDelivery   # same with Service selector
+      app: smartfooddelivery   # same with Service selector
   template:
     metadata:
       labels:
-        app: SmartFoodDelivery  
+        app: smartfooddelivery
     spec:
       containers:
-        - name: SmartFoodDelivery
-          image: 123456789012.dkr.ecr.us-east-2.amazonaws.com/my-springboot:latest
+        - name: smartfooddelivery
+          image: 087092906482.dkr.ecr.us-east-2.amazonaws.com/dev-ecr-backend:latest
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "0.5"
+            limits:
+              memory: "1Gi"
+              cpu: "0.5"            
           env:
             - name: POSTGRES_HOST
               valueFrom:
@@ -43,6 +50,8 @@ spec:
                 secretKeyRef:
                   name: db-secret
                   key: POSTGRES_PASS
+            - name: CHRIS_DATASOURCE_DRIVER_CLASS_NAME
+              value: org.postgresql.Driver
 
             - name: REDIS_HOST
               valueFrom:
@@ -87,66 +96,66 @@ spec:
                   name: kafka-config
                   key: KAFKA_BOOTSTRAP
 
-            - name: chris.jwt.secret-base64
+            - name: CHRIS_JWT_SECRET_BASE64
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_JWT_SECRET_BASE64
-            - name: chris.jwt.access-expiration-seconds
+            - name: CHRIS_JWT_ACCESS_EXPIRATION_SECONDS
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_JWT_ACCESS_EXPIRATION_SECONDS
-            - name: chris.jwt.refresh-expiration-seconds
+            - name: CHRIS_JWT_REFRESH_EXPIRATION_SECONDS
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_JWT_REFRESH_EXPIRATION_SECONDS
 
-            - name: chris.google.oauth.client-id
+            - name: CHRIS_GOOGLE_OAUTH_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_GOOGLE_OAUTH_CLIENT_ID
-            - name: chris.google.maps.api-key
+            - name: CHRIS_GOOGLE_MAPS_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_GOOGLE_MAPS_API_KEY
 
-            - name: chris.aws.s3.bucket
+            - name: CHRIS_AWS_S3_BUCKET
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_AWS_S3_BUCKET
-            - name: chris.aws.s3.region
+            - name: CHRIS_AWS_S3_REGION
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_AWS_S3_REGION
-            - name: chris.aws.s3.access-key-id
+            - name: CHRIS_AWS_S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_AWS_S3_ACCESS_KEY_ID
-            - name: chris.aws.s3.secret-access-key
+            - name: CHRIS_AWS_S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_AWS_S3_SECRET_ACCESS_KEY
 
-            - name: chris.stripe.secret-key
+            - name: CHRIS_STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_STRIPE_SECRET_KEY
-            - name: chris.stripe.webhook-secret
+            - name: CHRIS_STRIPE_WEBHOOK_SECRET
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
                   key: CHRIS_STRIPE_WEBHOOK_SECRET
 
-            - name: chris.openai.api-key
+            - name: CHRIS_OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: app-secrets

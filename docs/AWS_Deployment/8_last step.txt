@@ -1,0 +1,66 @@
+1. 部署后端 Deployment
+
+kubectl apply -f deployment.yaml
+
+2. 部署 Service
+
+kubectl apply -f service.yaml
+
+
+3. 部署 Ingress
+
+kubectl apply -f ingress.yaml
+
+拿到ingress address
+kubectl -n default describe ingress smartfooddelivery-backend-ingress
+
+创建 CNAME
+
+打开 Route 53 → Hosted zones → 进入 smartfooddeliveries.com。
+
+点 Create record。
+
+填写：
+
+Record name：api
+
+Record type：选择 CNAME
+
+Value：粘贴你的 ALB 域名
+k8s-default-smartfoo-d6373b5024-459345442.us-east-2.elb.amazonaws.com
+
+TTL：300（默认即可）
+
+Routing policy：Simple
+
+点 Create records。
+
+
+验证
+nslookup api.smartfooddeliveries.com
+
+
+手动拉取镜像重启后端服务(每次镜像更新后)
+
+kubectl rollout restart deployment/smartfooddelivery-backend
+
+
+
+# 只让 Web + JPA 先起来，关掉 Rabbit/Kafka/Redis 的 auto-config
+kubectl -n default set env deploy/smartfooddelivery-backend `
+  SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration `
+  SPRING_MAIN_LAZY_INITIALIZATION=true `
+  SERVER_ADDRESS=0.0.0.0
+
+kubectl -n default rollout status deploy/smartfooddelivery-backend
+
+逐步恢复依赖
+kubectl -n default set env deployment/smartfooddelivery-backend SPRING_RABBITMQ_SSL_ENABLED=true
+
+当服务能正常对 8080 监听并返回 200/404 后，再逐个把自动配置恢复：
+
+先恢复 Rabbit（去掉 RabbitAutoConfiguration），验证连 MQ 没问题（你开了 5671 + SPRING_RABBITMQ_SSL_ENABLED=true，如需要还要提供 truststore；否则也可以把 MQ 的 publisher-confirm-type 改异步、或推迟初始化）。
+kubectl -n default set env deploy/smartfooddelivery-backend SPRING_AUTOCONFIGURE_EXCLUDE-
+kubectl -n default set env deploy/smartfooddelivery-backend SPRING_MAIN_LAZY_INITIALIZATION-
+
+再恢复 Kafka（MSK Serverless 需要允许 Cluster SG → MSK SG 9098 入站，且 Pod 的 IAM 权限包含 kafka-cluster:Connect 等；否则启动期会卡住）
