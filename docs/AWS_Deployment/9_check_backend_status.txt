@@ -1,0 +1,23 @@
+# Pod 要变成 Running/Ready
+kubectl -n default get pods -l app=smartfooddelivery -w
+
+# Pod 描述
+kubectl -n default describe pod <Pod NAME>
+
+# 后端启动日志
+kubectl -n default logs <Pod NAME>
+
+# Service 应该出现 endpoints（10.0.x.x:8080）
+kubectl -n default get endpoints smartfooddelivery-service
+
+# 查询现有target group
+aws elbv2 describe-target-groups --region us-east-2
+
+# 目标组健康应为 healthy
+aws elbv2 describe-target-health --region us-east-2 --target-group-arn arn:aws:elasticloadbalancing:us-east-2:087092906482:targetgroup/k8s-default-smartfoo-6f512bb5cf/5fd1dcc8a4cbf696 --query "TargetHealthDescriptions[].TargetHealth.State"
+
+# 公网再测
+curl.exe -I https://api.smartfooddeliveries.com/
+
+进入 Pod 查所有环境变量
+kubectl -n default exec -it <pod-name> -- env

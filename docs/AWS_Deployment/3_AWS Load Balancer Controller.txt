@@ -1,40 +1,37 @@
-1) Prepare the IAM OIDC provider (only required once)
+1）准备 IAM OIDC 提供商（只需一次）
 
-If eksctl did not automatically configure OIDC when creating the cluster (so that ServiceAccounts can be bound to IAM Roles and Pods can automatically
-obtain AWS permissions just by using the ServiceAccount, without hardcoding credentials), then you need to add it manually:
+如果你 eksctl 创建集群时没自动配置 OIDC (ServiceAccount 和 IAM Role 绑定, Pod 只需使用 ServiceAccount，就能自动获得 AWS 权限，无需写死密钥)，请补上：
 
 eksctl utils associate-iam-oidc-provider --region us-east-2 --cluster dev-eks --approve
 
+2）创建 IAM Policy
 
-
-2）Create IAM Policy
-
-Download official Policy：
+下载官方 Policy：
 
 curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.1/docs/install/iam_policy.json
 
-Create Policy：
+创建 Policy：
 
 aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
 
-3) Bind IAM permissions to a Kubernetes ServiceAccount
+3）为 K8s ServiceAccount 绑定 IAM 权限
 
 eksctl create iamserviceaccount \
   --cluster dev-eks \
   --namespace kube-system \
   --name aws-load-balancer-controller \
-  --attach-policy-arn arn:aws:iam::<Your AWS Account ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+  --attach-policy-arn arn:aws:iam::<你的AWS账号ID>:policy/AWSLoadBalancerControllerIAMPolicy \
   --approve \
   --region us-east-2
 
-4）Install AWS Load Balancer Controller（Use Helm）
+4）安装 AWS Load Balancer Controller（用 Helm 推荐）
 
-Add helm repo：
+添加 helm repo：
 
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update
 
-Install controller：
+安装 controller：
 
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
@@ -43,8 +40,79 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   --set serviceAccount.name=aws-load-balancer-controller \
   --set region=us-east-2 \
   --set vpcId=vpc-09fbba82ba68eb80d \
-  --set image.repository=602401143452.dkr.ecr.us-east-2.amazonaws.com/amazon/aws-load-balancer-controller
+  --set image.repository=602401143452.dkr.ecr.us-east-2.amazonaws.com/amazon/aws-load-balancer-controller \
+  --set replicaCount=1
 
-Verify that the Controller is running properly:
+给 kube-system 新建一个 Fargate Profile（纯 Fargate 必做）
+eksctl create fargateprofile `
+  --cluster dev-eks `
+  --region us-east-2 `
+  --name fp-kube-system `
+  --namespace kube-system
+
+给 fp-kube-system ECR 拉取权限
+# 查 kube-system 这个 Fargate Profile 的 Pod Execution Role
+aws eks describe-fargate-profile `
+  --cluster-name dev-eks `
+  --region us-east-2 `
+  --fargate-profile-name fp-kube-system `
+  --query "fargateProfile.podExecutionRoleArn" `
+  --output text
+
+# 给这个角色附加 ECR 拉取相关策略
+aws iam attach-role-policy --role-name <上面角色名> --policy-arn arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy
+aws iam attach-role-policy --role-name <上面角色名> --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
+# 找到关键对象：Cluster SG、Endpoint、本 Pod 的 ENI
+# 集群的 Cluster Security Group（Fargate Pod 一般就用它）
+$Region = "us-east-2"
+$Cluster = "dev-eks"
+
+$clusterSgId = aws eks describe-cluster --region $Region --name $Cluster `
+  --query 'cluster.resourcesVpcConfig.clusterSecurityGroupId' --output text
+$clusterSgId
+
+# ECR DKR 接口型 VPCE 的信息（看挂了哪个 SG / 子网 / 是否开了 Private DNS）
+aws ec2 describe-vpc-endpoints --region $Region `
+  --filters Name=service-name,Values=com.amazonaws.$Region.ecr.dkr `
+            Name=vpc-id,Values=$(aws eks describe-cluster --region $Region --name $Cluster --query 'cluster.resourcesVpcConfig.vpcId' --output text) `
+  --query 'VpcEndpoints[0].{id:VpcEndpointId,sg:Groups[*].GroupId,subnets:SubnetIds,privateDns:PrivateDnsEnabled}'
+  
+# 取你事件里 Pod 所在的私网 IP（10.0.11.224）去反查它的 ENI 和绑定的 SG
+aws ec2 describe-network-interfaces --region $Region `
+  --filters Name=private-ip-address,Values=10.0.11.224 `
+  --query 'NetworkInterfaces[0].Groups[*].GroupId'
+
+# 给 ECR DKR Endpoint 的 SG 明确放行来自 Cluster SG 的 443
+$Region   = "us-east-2"
+$EpSg     = "sg-0b893858e226fdcf1"   # 你查到的 ECR DKR VPCE 的 SG
+$ClusterSg= "sg-0dddd4a719085fce7"   # 你查到的 Cluster SG
+
+aws ec2 authorize-security-group-ingress --region $Region `
+  --group-id $EpSg `
+  --ip-permissions IpProtocol=tcp,FromPort=443,ToPort=443,UserIdGroupPairs="[{GroupId='$ClusterSg',Description='EKS Cluster SG'}]"
+
+# 对 ECR API Endpoint做同样放行
+# 找 ECR API 的 Endpoint SG
+$api = aws ec2 describe-vpc-endpoints --region $Region `
+  --filters Name=service-name,Values=com.amazonaws.$Region.ecr.api `
+            Name=vpc-id,Values=$(aws eks describe-cluster --region $Region --name dev-eks --query 'cluster.resourcesVpcConfig.vpcId' --output text) `
+  --query 'VpcEndpoints[0].Groups[*].GroupId' --output text
+$api
+
+# 放行 443 from Cluster SG
+aws ec2 authorize-security-group-ingress --region $Region `
+  --group-id $api `
+  --ip-permissions IpProtocol=tcp,FromPort=443,ToPort=443,UserIdGroupPairs="[{GroupId='$ClusterSg',Description='EKS Cluster SG'}]"
+
+
+
+触发控制器重建并等待就绪
+kubectl -n kube-system rollout restart deploy aws-load-balancer-controller
+kubectl -n kube-system rollout status deploy/aws-load-balancer-controller
+检查 Webhook 是否有后端：
+kubectl -n kube-system get endpoints aws-load-balancer-webhook-service
+
+验证 Controller 是否运行正常:
 
 kubectl get pod -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller

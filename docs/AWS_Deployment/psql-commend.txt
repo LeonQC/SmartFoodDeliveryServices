@@ -1,0 +1,33 @@
+kubectl apply -f psql-client.yaml -n default
+
+kubectl exec -it psql-client -- psql -h dev-postgres.c1wi66ma4ywx.us-east-2.rds.amazonaws.com -U devuser -d devdb
+
+1. 先把本地 SQL 文件复制进 Pod：
+
+kubectl cp ./your.sql default/psql-client:/tmp/your.sql
+
+
+2. 进入 Pod：
+
+kubectl exec -it psql-client -- bash
+
+
+3. 执行导入：
+
+psql -h <RDS地址> -U <用户名> -d <数据库名> -f /tmp/your.sql
+
+
+一条命令直接导入（不进 Pod shell）
+kubectl exec -i psql-client -- psql -h <RDS地址> -U <用户名> -d <数据库名> < ./your.sql
+
+
+用 \i 命令（适合交互式）
+
+如果你已经在 psql 里（进入了数据库交互命令行），直接输入：
+
+\i /tmp/your.sql
+
+
+
+
+flyway

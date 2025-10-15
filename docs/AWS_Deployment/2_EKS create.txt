@@ -1,9 +1,4 @@
-1. Create the EKS Cluster
-When an EKS cluster is first created, AWS automatically performs some background update actions (for example, control plane upgrades and addon creation).
-If you try to create a Fargate Profile immediately, AWS may return a 409 Conflict because it considers an “update in progress.”
-
-Use the following command to create the cluster with both private and public subnets:
-
+1. AWS EKS 集群刚建好时会自动做一些后台“更新”动作（比如控制面升级、addon创建等），此时如果你立刻去新建 Fargate Profile，AWS 认为“有个 update in progress”，所以暂时不让建，导致 409 冲突。
 eksctl create cluster \
   --name dev-eks \
   --vpc-private-subnets=subnet-0b56bc33876e94eea,subnet-0215927caa5f3845b \
@@ -11,21 +6,9 @@ eksctl create cluster \
   --region us-east-2 \
   --fargate
 
-
-
-
-2. Manually Add a Fargate Profile
-
-If the default Fargate Profile was not created due to the update conflict, you can add it manually with:
+2. 手动用 eksctl 重新加 Fargate Profile:
 
 eksctl create fargateprofile --cluster dev-eks --name fp-default --namespace default --region us-east-2
 
-
-
-
-
-3. Configure kubectl to Connect to the Cluster
-
-To manage and operate the EKS cluster using kubectl, you need to write the kubeconfig file.
-This command generates the file at C:\Users\Administrator\.kube\config:
+3. 让kubectl连接云端EKS集群进行管理和操作(指令会创建C:\\Users\\Administrator\\.kube\\config 这个config文件)
 eksctl utils write-kubeconfig --region us-east-2 --cluster dev-eks

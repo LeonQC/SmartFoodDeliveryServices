@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: backend-ingress
+  name: smartfooddelivery-backend-ingress
   namespace: default
   annotations:
     
@@ -10,7 +10,7 @@ metadata:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-2:xxxxxxxx:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx # use real ACM Certificate
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-2:087092906482:certificate/90d20294-405f-4945-9726-d72c4e413908
     
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     
@@ -24,7 +24,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: api.smartfooddeliveries.com   # self-defined hostname
+    - host: api.smartfooddeliveries.com   # optional, self-defined hostname
       http:
         paths:
           - path: /
