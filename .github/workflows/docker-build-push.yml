@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       # 1) 检查这次运行是否真的拿到了 secrets（只打印长度）
-      - name: [DEBUG] Check AWS/ECR secrets visibility
+      - name: "[DEBUG] Check AWS/ECR secrets visibility"
         env:
           AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           SAK:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -41,7 +41,7 @@ jobs:
           aws configure list
 
       # 3) 避免“上一轮 Docker 登录缓存”造成假阳性
-      - name: [DEBUG] Clear old Docker creds (best-effort)
+      - name: "[DEBUG] Clear old Docker creds (best-effort)"
         continue-on-error: true
         run: rm -f ~/.docker/config.json || true
 
