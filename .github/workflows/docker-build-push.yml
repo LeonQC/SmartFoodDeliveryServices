@@ -2,105 +2,50 @@ name: Build and Push Docker image to ECR
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: us-east-2
-      REPOSITORY: ${{ secrets.ECR_REPOSITORY }} # 仅仓库名，如 foodie-server
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # === Debug 基础信息 ===
-      - name: [DEBUG] Show workflow metadata
-        run: |
-          echo "Workflow file ref: $GITHUB_WORKFLOW_REF"
-          echo "Workflow name: $GITHUB_WORKFLOW"
-          echo "Job name: $GITHUB_JOB"
-          echo "Actor: $GITHUB_ACTOR"
-          echo "Ref: $GITHUB_REF"
-          echo "SHA: $GITHUB_SHA"
-
-      - name: [DEBUG] Check secrets visibility (length only)
-        env:
-          AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          SAK: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REPO: ${{ secrets.ECR_REPOSITORY }}
-        run: |
-          test -z "$AKID" && echo "AWS_ACCESS_KEY_ID = MISSING" || echo "AWS_ACCESS_KEY_ID length = ${#AKID}"
-          test -z "$SAK" && echo "AWS_SECRET_ACCESS_KEY = MISSING" || echo "AWS_SECRET_ACCESS_KEY length = ${#SAK}"
-          test -z "$REPO" && echo "ECR_REPOSITORY = MISSING" || echo "ECR_REPOSITORY = $REPO"
-
-      # === 设置 AWS 凭证（静态密钥） ===
-      - name: Configure AWS credentials (static keys)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-2
 
-      - name: [DEBUG] Verify AWS identity
-        run: |
-          aws sts get-caller-identity
-          aws configure list
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
 
-      # === 登录 ECR 并打印 registry ===
       - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: [DEBUG] Show ECR registry and repo
-        run: |
-          echo "ECR registry: ${{ steps.ecr.outputs.registry }}"
-          echo "Repository: $REPOSITORY"
-          echo "Region: $AWS_REGION"
-
-      # === 可选：检查仓库是否存在（失败不致命） ===
-      - name: [DEBUG] Describe target ECR repository (best-effort)
-        continue-on-error: true
-        run: |
-          aws ecr describe-repositories --repository-names "$REPOSITORY" --region "$AWS_REGION"
-
-      # === 构造镜像标签并打印 ===
-      - name: Set image tags
-        id: tags
-        run: |
-          REG="${{ steps.ecr.outputs.registry }}"
-          IMG_LATEST="${REG}/${REPOSITORY}:latest"
-          IMG_SHA="${REG}/${REPOSITORY}:${GITHUB_SHA}"
-          echo "IMAGE_LATEST=$IMG_LATEST" >> $GITHUB_ENV
-          echo "IMAGE_SHA=$IMG_SHA" >> $GITHUB_ENV
-          echo "IMAGE_LATEST=$IMG_LATEST"
-          echo "IMAGE_SHA=$IMG_SHA"
-
-      # === 构建并推送（开启命令回显） ===
-      - name: Build image
+      - name: Build and Push
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ secrets.ECR_REPOSITORY }}    # 只写仓库名，例如 foodie-server
         run: |
           set -euo pipefail
-          set -x
-          docker version
+          echo "Registry: $REGISTRY"
+          echo "Repository: $REPOSITORY"
+
+          IMAGE_LATEST="$REGISTRY/$REPOSITORY:latest"
+          IMAGE_SHA="$REGISTRY/$REPOSITORY:${GITHUB_SHA}"
+
           docker build -t "$IMAGE_LATEST" .
           docker tag "$IMAGE_LATEST" "$IMAGE_SHA"
 
-      - name: [DEBUG] List local images
-        run: |
-          docker images | head -n 50
-
-      - name: Push image (latest & sha)
-        run: |
-          set -euo pipefail
-          set -x
           docker push "$IMAGE_LATEST"
           docker push "$IMAGE_SHA"
 
-      # === 收尾：确认远端镜像存在（失败不致命，日志用途）===
-      - name: [DEBUG] Verify pushed images on ECR (best-effort)
-        continue-on-error: true
-        run: |
-          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag=latest --region "$AWS_REGION"
-          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="${GITHUB_SHA}" --region "$AWS_REGION"
+          # 可选：列出 ECR 中的镜像（失败不致命，仅日志）
+          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag=latest --region us-east-2 || true
+          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="${GITHUB_SHA}" --region us-east-2 || true
