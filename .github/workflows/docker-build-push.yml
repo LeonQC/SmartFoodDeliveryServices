@@ -9,95 +9,63 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: us-east-2
-      REPOSITORY: ${{ secrets.ECR_REPOSITORY }} # 仅仓库名，如 foodie-server
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: [DEBUG] List workflows and grep suspicious fields
-        run: |
-          echo "== List .github/workflows =="
-          ls -la .github/workflows || true
-          echo
-          echo "== Grep 'configure-aws-credentials' =="
-          grep -R --line-number "configure-aws-credentials" .github/workflows || true
-          echo
-          echo "== Grep 'output-env-credentials' =="
-          grep -R --line-number "output-env-credentials" .github/workflows || true
-          echo
-          echo "== Grep 'audience:' =="
-          grep -R --line-number "audience:" .github/workflows || true
-          echo
-          echo "GITHUB_WORKFLOW_REF = $GITHUB_WORKFLOW_REF"
-          echo "GITHUB_WORKFLOW     = $GITHUB_WORKFLOW"
-          echo "GITHUB_JOB          = $GITHUB_JOB"
-
-      - name: [DEBUG] Check secrets visibility
+      # 1) 检查这次运行是否真的拿到了 secrets（只打印长度）
+      - name: [DEBUG] Check AWS/ECR secrets visibility
         env:
           AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           SAK:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REG:  ${{ secrets.ECR_REGISTRY }}
           REPO: ${{ secrets.ECR_REPOSITORY }}
         run: |
           test -z "$AKID" && echo "AWS_ACCESS_KEY_ID = MISSING" || echo "AWS_ACCESS_KEY_ID length = ${#AKID}"
           test -z "$SAK"  && echo "AWS_SECRET_ACCESS_KEY = MISSING" || echo "AWS_SECRET_ACCESS_KEY length = ${#SAK}"
+          test -z "$REG"  && echo "ECR_REGISTRY = MISSING" || echo "ECR_REGISTRY = $REG"
           test -z "$REPO" && echo "ECR_REPOSITORY = MISSING" || echo "ECR_REPOSITORY = $REPO"
 
-      - name: Configure AWS credentials (static keys)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-2
 
-
-      - name: Verify AWS identity (must succeed)
+      # 2) 强制验证当前凭证（如果这里失败，本次 run 就别继续）
+      - name: Verify AWS identity
         run: |
-          set -e
           aws sts get-caller-identity
           aws configure list
 
-      - name: [DEBUG] Clear Docker credentials cache (best-effort)
+      # 3) 避免“上一轮 Docker 登录缓存”造成假阳性
+      - name: [DEBUG] Clear old Docker creds (best-effort)
         continue-on-error: true
-        run: |
-          rm -f ~/.docker/config.json || true
+        run: rm -f ~/.docker/config.json || true
 
       - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: [DEBUG] Show ECR target
+      - name: Set up Docker tag
         run: |
-          echo "ECR registry: ${{ steps.ecr.outputs.registry }}"
-          echo "Repository: $REPOSITORY"
-          echo "Region: $AWS_REGION"
+          REGISTRY="${{ steps.ecr.outputs.registry }}"
+          REPO="${{ secrets.ECR_REPOSITORY }}"
+          echo "ECR_IMAGE=${REGISTRY}/${REPO}:latest" >> $GITHUB_ENV
+          echo "ECR_IMAGE_SHA=${REGISTRY}/${REPO}:${GITHUB_SHA}" >> $GITHUB_ENV
+          echo "ECR_IMAGE=$ECR_IMAGE"
+          echo "ECR_IMAGE_SHA=$ECR_IMAGE_SHA"
 
-      - name: Set image tags
+      - name: Build Docker image
         run: |
-          REG="${{ steps.ecr.outputs.registry }}"
-          echo "IMAGE_LATEST=$REG/$REPOSITORY:latest" >> $GITHUB_ENV
-          echo "IMAGE_SHA=$REG/$REPOSITORY:${GITHUB_SHA}" >> $GITHUB_ENV
-          echo "IMAGE_LATEST=$REG/$REPOSITORY:latest"
-          echo "IMAGE_SHA=$REG/$REPOSITORY:${GITHUB_SHA}"
+          set -e
+          docker build -t "$ECR_IMAGE" .
+          docker tag "$ECR_IMAGE" "$ECR_IMAGE_SHA"
 
-      - name: Build image
+      - name: Push Docker image to ECR
         run: |
-          set -euo pipefail
-          set -x
-          docker build -t "$IMAGE_LATEST" .
-          docker tag "$IMAGE_LATEST" "$IMAGE_SHA"
-
-      - name: Push image
-        run: |
-          set -euo pipefail
-          set -x
-          docker push "$IMAGE_LATEST"
-          docker push "$IMAGE_SHA"
-
-      - name: [DEBUG] Verify images on ECR (best-effort)
-        continue-on-error: true
-        run: |
-          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag=latest --region "$AWS_REGION"
-          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="${GITHUB_SHA}" --region "$AWS_REGION"
+          set -e
+          docker push "$ECR_IMAGE"
+          docker push "$ECR_IMAGE_SHA"
