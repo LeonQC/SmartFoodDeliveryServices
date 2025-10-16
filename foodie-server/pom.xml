@@ -171,6 +171,12 @@
             <version>11.10.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <version>11.10.2</version>
+        </dependency>
+
     </dependencies>
 
 </project>
