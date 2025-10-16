@@ -9,43 +9,103 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-2
+      REPOSITORY: ${{ secrets.ECR_REPOSITORY }} # 仅仓库名，如 foodie-server
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      # ---- 自检：列出所有 workflows 并搜索可疑字段 ----
+      - name: [DEBUG] List workflows and grep suspicious fields
+        run: |
+          echo "== List .github/workflows =="
+          ls -la .github/workflows || true
+          echo
+          echo "== Grep 'configure-aws-credentials' =="
+          grep -R --line-number "configure-aws-credentials" .github/workflows || true
+          echo
+          echo "== Grep 'output-env-credentials' =="
+          grep -R --line-number "output-env-credentials" .github/workflows || true
+          echo
+          echo "== Grep 'audience:' =="
+          grep -R --line-number "audience:" .github/workflows || true
+          echo
+          echo "GITHUB_WORKFLOW_REF = $GITHUB_WORKFLOW_REF"
+          echo "GITHUB_WORKFLOW     = $GITHUB_WORKFLOW"
+          echo "GITHUB_JOB          = $GITHUB_JOB"
+
+      # ---- 检查 secrets 是否可见（只打印长度） ----
+      - name: [DEBUG] Check secrets visibility
+        env:
+          AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          SAK:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REPO: ${{ secrets.ECR_REPOSITORY }}
+        run: |
+          test -z "$AKID" && echo "AWS_ACCESS_KEY_ID = MISSING" || echo "AWS_ACCESS_KEY_ID length = ${#AKID}"
+          test -z "$SAK"  && echo "AWS_SECRET_ACCESS_KEY = MISSING" || echo "AWS_SECRET_ACCESS_KEY length = ${#SAK}"
+          test -z "$REPO" && echo "ECR_REPOSITORY = MISSING" || echo "ECR_REPOSITORY = $REPO"
+
+      # ---- 配置 AWS 凭证：静态密钥（只有这一个）----
+      - name: Configure AWS credentials (static keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
+      # ---- 强制验证：如果这里失败，就不要继续 ----
+      - name: Verify AWS identity (must succeed)
+        run: |
+          set -e
+          aws sts get-caller-identity
+          aws configure list
 
+      # ---- 清理任何旧的 Docker 登录，防止“侥幸成功” ----
+      - name: [DEBUG] Clear Docker credentials cache (best-effort)
+        continue-on-error: true
+        run: |
+          rm -f ~/.docker/config.json || true
+
+      # ---- 登录 ECR 并打印 registry ----
       - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and Push
-        env:
-          REGISTRY: ${{ steps.ecr.outputs.registry }}
-          REPOSITORY: ${{ secrets.ECR_REPOSITORY }}    # 只写仓库名，例如 foodie-server
+      - name: [DEBUG] Show ECR target
+        run: |
+          echo "ECR registry: ${{ steps.ecr.outputs.registry }}"
+          echo "Repository: $REPOSITORY"
+          echo "Region: $AWS_REGION"
+
+      # ---- 生成镜像标签 ----
+      - name: Set image tags
+        run: |
+          REG="${{ steps.ecr.outputs.registry }}"
+          echo "IMAGE_LATEST=$REG/$REPOSITORY:latest" >> $GITHUB_ENV
+          echo "IMAGE_SHA=$REG/$REPOSITORY:${GITHUB_SHA}" >> $GITHUB_ENV
+          echo "IMAGE_LATEST=$REG/$REPOSITORY:latest"
+          echo "IMAGE_SHA=$REG/$REPOSITORY:${GITHUB_SHA}"
+
+      # ---- 构建并推送（命令回显）----
+      - name: Build image
         run: |
           set -euo pipefail
-          echo "Registry: $REGISTRY"
-          echo "Repository: $REPOSITORY"
-
-          IMAGE_LATEST="$REGISTRY/$REPOSITORY:latest"
-          IMAGE_SHA="$REGISTRY/$REPOSITORY:${GITHUB_SHA}"
-
+          set -x
           docker build -t "$IMAGE_LATEST" .
           docker tag "$IMAGE_LATEST" "$IMAGE_SHA"
 
+      - name: Push image
+        run: |
+          set -euo pipefail
+          set -x
           docker push "$IMAGE_LATEST"
           docker push "$IMAGE_SHA"
 
-          # 可选：列出 ECR 中的镜像（失败不致命，仅日志）
-          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag=latest --region us-east-2 || true
-          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="${GITHUB_SHA}" --region us-east-2 || true
+      # ---- 可选：验证远端镜像（失败不致命）----
+      - name: [DEBUG] Verify images on ECR (best-effort)
+        continue-on-error: true
+        run: |
+          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag=latest --region "$AWS_REGION"
+          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="${GITHUB_SHA}" --region "$AWS_REGION"
