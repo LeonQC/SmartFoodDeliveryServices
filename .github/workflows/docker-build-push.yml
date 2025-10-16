@@ -17,7 +17,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---- 自检：列出所有 workflows 并搜索可疑字段 ----
       - name: [DEBUG] List workflows and grep suspicious fields
         run: |
           echo "== List .github/workflows =="
@@ -36,7 +35,6 @@ jobs:
           echo "GITHUB_WORKFLOW     = $GITHUB_WORKFLOW"
           echo "GITHUB_JOB          = $GITHUB_JOB"
 
-      # ---- 检查 secrets 是否可见（只打印长度） ----
       - name: [DEBUG] Check secrets visibility
         env:
           AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -47,7 +45,6 @@ jobs:
           test -z "$SAK"  && echo "AWS_SECRET_ACCESS_KEY = MISSING" || echo "AWS_SECRET_ACCESS_KEY length = ${#SAK}"
           test -z "$REPO" && echo "ECR_REPOSITORY = MISSING" || echo "ECR_REPOSITORY = $REPO"
 
-      # ---- 配置 AWS 凭证：静态密钥（只有这一个）----
       - name: Configure AWS credentials (static keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -55,20 +52,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ---- 强制验证：如果这里失败，就不要继续 ----
+
       - name: Verify AWS identity (must succeed)
         run: |
           set -e
           aws sts get-caller-identity
           aws configure list
 
-      # ---- 清理任何旧的 Docker 登录，防止“侥幸成功” ----
       - name: [DEBUG] Clear Docker credentials cache (best-effort)
         continue-on-error: true
         run: |
           rm -f ~/.docker/config.json || true
 
-      # ---- 登录 ECR 并打印 registry ----
       - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -79,7 +74,6 @@ jobs:
           echo "Repository: $REPOSITORY"
           echo "Region: $AWS_REGION"
 
-      # ---- 生成镜像标签 ----
       - name: Set image tags
         run: |
           REG="${{ steps.ecr.outputs.registry }}"
@@ -88,7 +82,6 @@ jobs:
           echo "IMAGE_LATEST=$REG/$REPOSITORY:latest"
           echo "IMAGE_SHA=$REG/$REPOSITORY:${GITHUB_SHA}"
 
-      # ---- 构建并推送（命令回显）----
       - name: Build image
         run: |
           set -euo pipefail
@@ -103,7 +96,6 @@ jobs:
           docker push "$IMAGE_LATEST"
           docker push "$IMAGE_SHA"
 
-      # ---- 可选：验证远端镜像（失败不致命）----
       - name: [DEBUG] Verify images on ECR (best-effort)
         continue-on-error: true
         run: |
