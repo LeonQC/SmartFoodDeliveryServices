@@ -2,30 +2,17 @@ name: Build and Push Docker image to ECR
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   workflow_dispatch:
 
 jobs:
   build:
+    if: github.repository == 'KuanWang93/SmartFoodDeliveryServices'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # 1) 检查这次运行是否真的拿到了 secrets（只打印长度）
-      - name: "[DEBUG] Check AWS/ECR secrets visibility"
-        env:
-          AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          SAK:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REG:  ${{ secrets.ECR_REGISTRY }}
-          REPO: ${{ secrets.ECR_REPOSITORY }}
-        run: |
-          test -z "$AKID" && echo "AWS_ACCESS_KEY_ID = MISSING" || echo "AWS_ACCESS_KEY_ID length = ${#AKID}"
-          test -z "$SAK"  && echo "AWS_SECRET_ACCESS_KEY = MISSING" || echo "AWS_SECRET_ACCESS_KEY length = ${#SAK}"
-          test -z "$REG"  && echo "ECR_REGISTRY = MISSING" || echo "ECR_REGISTRY = $REG"
-          test -z "$REPO" && echo "ECR_REPOSITORY = MISSING" || echo "ECR_REPOSITORY = $REPO"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -34,38 +21,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
-      # 2) 强制验证当前凭证（如果这里失败，本次 run 就别继续）
-      - name: Verify AWS identity
-        run: |
-          aws sts get-caller-identity
-          aws configure list
-
-      # 3) 避免“上一轮 Docker 登录缓存”造成假阳性
-      - name: "[DEBUG] Clear old Docker creds (best-effort)"
-        continue-on-error: true
-        run: rm -f ~/.docker/config.json || true
-
       - name: Login to Amazon ECR
-        id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Set up Docker tag
-        run: |
-          REGISTRY="${{ steps.ecr.outputs.registry }}"
-          REPO="${{ secrets.ECR_REPOSITORY }}"
-          echo "ECR_IMAGE=${REGISTRY}/${REPO}:latest" >> $GITHUB_ENV
-          echo "ECR_IMAGE_SHA=${REGISTRY}/${REPO}:${GITHUB_SHA}" >> $GITHUB_ENV
-          echo "ECR_IMAGE=$ECR_IMAGE"
-          echo "ECR_IMAGE_SHA=$ECR_IMAGE_SHA"
+        id: vars
+        run: echo "ECR_IMAGE=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest" >> $GITHUB_ENV
 
       - name: Build Docker image
-        run: |
-          set -e
-          docker build -t "$ECR_IMAGE" .
-          docker tag "$ECR_IMAGE" "$ECR_IMAGE_SHA"
+        run: docker build -t $ECR_IMAGE .
 
       - name: Push Docker image to ECR
-        run: |
-          set -e
-          docker push "$ECR_IMAGE"
-          docker push "$ECR_IMAGE_SHA"
+        run: docker push $ECR_IMAGE
